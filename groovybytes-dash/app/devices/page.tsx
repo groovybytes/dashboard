@@ -28,7 +28,7 @@ const simulatedIoTHub = {
       }, 500)
     })
   },
-  deleteDevice: async (id: string): Promise<void> => {
+  deleteDevice: async (): Promise<void> => {
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve()

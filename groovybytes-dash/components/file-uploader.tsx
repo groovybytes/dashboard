@@ -49,7 +49,8 @@ export function FileUploader({ onFileUpload }: FileUploaderProps) {
       }
 
       setProgress(100)
-    } catch (err) {
+    } catch (_err) {
+      console.warn(_err);
       setError("An error occurred during upload.")
     } finally {
       setUploading(false)
