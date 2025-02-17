@@ -59,7 +59,7 @@ export default function DevicesPage() {
   const handleDeleteDevice = async (id: string) => {
     setIsLoading(true)
     try {
-      await simulatedIoTHub.deleteDevice(id)
+      await simulatedIoTHub.deleteDevice()
       setDevices(devices.filter((device) => device.id !== id))
     } catch (error) {
       console.error("Error deleting device:", error)
