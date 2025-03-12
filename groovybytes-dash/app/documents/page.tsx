@@ -13,7 +13,7 @@ export default function DocumentsPage() {
     await new Promise((resolve) => setTimeout(resolve, 2000))
 
     console.log("File uploaded successfully")
-    // TODO: real implementation:
+    // In a real implementation, you would:
     // 1. Get a SAS token from your server
     // 2. Use @azure/storage-blob to upload the file
     // 3. Handle success/failure

@@ -23,11 +23,11 @@ export function FileUploader({ onFileUpload }: FileUploaderProps) {
       const selectedFile = e.target.files[0]
       const fileType = selectedFile.name.split(".").pop()?.toLowerCase()
 
-      if (["json", "xlsx", "csv"].includes(fileType || "")) {
+      if (["json", "xlsx", "csv", "pdf"].includes(fileType || "")) {
         setFile(selectedFile)
         setError(null)
       } else {
-        setError("Please select a JSON, XLSX, or CSV file.")
+        setError("Please select a JSON, XLSX, CSV, PDF file.")
         setFile(null)
       }
     }
@@ -59,7 +59,7 @@ export function FileUploader({ onFileUpload }: FileUploaderProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center space-x-4">
-        <Input type="file" accept=".json,.xlsx,.csv" onChange={handleFileChange} className="flex-1" />
+        <Input type="file" accept=".json,.xlsx,.csv,.pdf" onChange={handleFileChange} className="flex-1" />
         <Button onClick={handleUpload} disabled={!file || uploading}>
           {uploading ? "Uploading..." : "Upload"}
         </Button>
