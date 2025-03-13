@@ -9,6 +9,16 @@ import { Trash2, Edit, Plus } from "lucide-react"
 import { DeviceModal, type DeviceFormData } from "@/components/device-modal"
 import { toast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface Device {
   id: string
@@ -20,88 +30,101 @@ interface Device {
   connectionString?: string
 }
 
-const API_BASE_URL = "http://127.0.0.1:5000";
+const API_BASE_URL = "http://127.0.0.1:5000"
 
 export default function DevicesPage() {
-  const [devices, setDevices] = useState<Device[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingDevice, setEditingDevice] = useState<DeviceFormData | null>(null);
+  const [devices, setDevices] = useState<Device[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingDevice, setEditingDevice] = useState<DeviceFormData | null>(null)
+  const [deviceToDelete, setDeviceToDelete] = useState<Device | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
-    fetchDevices();
-  }, []);
+    fetchDevices()
+  }, [])
 
   const fetchDevices = async () => {
-    setIsLoading(true);
+    setIsLoading(true)
     try {
-      const res = await fetch(`${API_BASE_URL}/get-devices`);
-      const data = await res.json();
-      setDevices(data);
+      const res = await fetch(`${API_BASE_URL}/get-devices`)
+      const data = await res.json()
+      setDevices(data)
     } catch (error) {
-      console.error("Error fetching devices:", error);
-      toast({ title: "Error", description: "Failed to fetch devices.", variant: "destructive" });
+      console.error("Error fetching devices:", error)
+      toast({ title: "Error", description: "Failed to fetch devices.", variant: "destructive" })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleAddOrUpdateDevice = async (deviceData: DeviceFormData) => {
-    setIsLoading(true);
+    setIsLoading(true)
     try {
       const newDevice = {
         deviceID: `device-${Date.now()}`, // Auto-generate unique deviceID
         ...deviceData,
-      };
+      }
 
-      const method = editingDevice ? "PUT" : "POST";
+      const method = editingDevice ? "PUT" : "POST"
       const url = editingDevice
         ? `${API_BASE_URL}/update-device/${deviceData.deviceID}`
-        : `${API_BASE_URL}/register-device`;
+        : `${API_BASE_URL}/register-device`
 
       await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newDevice),
-      });
+      })
 
-      await fetchDevices();
-      setIsModalOpen(false);
-      setEditingDevice(null);
-      toast({ title: "Success", description: `Device ${editingDevice ? "updated" : "added"} successfully.` });
+      await fetchDevices()
+      setIsModalOpen(false)
+      setEditingDevice(null)
+      toast({ title: "Success", description: `Device ${editingDevice ? "updated" : "added"} successfully.` })
     } catch (error) {
-      console.error("Error saving device:", error);
-      toast({ title: "Error", description: `Failed to ${editingDevice ? "update" : "add"} device.`, variant: "destructive" });
+      console.error("Error saving device:", error)
+      toast({
+        title: "Error",
+        description: `Failed to ${editingDevice ? "update" : "add"} device.`,
+        variant: "destructive",
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
-  const handleDeleteDevice = async (deviceID: string) => {
-    if (confirm("Are you sure you want to delete this device?")) {
-      setIsLoading(true);
-      try {
-        console.log("Deleting device:", deviceID); // Log deviceID before deletion
-    
-        const res = await fetch(`${API_BASE_URL}/delete-device/${deviceID}`, {
-          method: "DELETE",
-        });
-    
-        const data = await res.json();
-        console.log("Delete response:", data); // Log response
-    
-        if (!res.ok) {
-          throw new Error(data.error || "Failed to delete device");
-        }
-    
-        fetchDevices(); // Refresh the device list
-      } catch (error) {
-        console.error("Error deleting device:", error);
-      } finally {
-        setIsLoading(false);
+  const confirmDeleteDevice = (device: Device) => {
+    setDeviceToDelete(device)
+  }
+
+  const handleDeleteDevice = async () => {
+    if (!deviceToDelete) return
+
+    setIsDeleting(true)
+    try {
+      console.log("Deleting device:", deviceToDelete.deviceID)
+
+      const res = await fetch(`${API_BASE_URL}/delete-device/${deviceToDelete.deviceID}`, {
+        method: "DELETE",
+      })
+
+      const data = await res.json()
+      console.log("Delete response:", data)
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to delete device")
       }
+
+      fetchDevices() // Refresh the device list
+      toast({ title: "Success", description: "Device deleted successfully." })
+    } catch (error) {
+      console.error("Error deleting device:", error)
+      toast({ title: "Error", description: "Failed to delete device.", variant: "destructive" })
+    } finally {
+      setIsDeleting(false)
+      setDeviceToDelete(null)
     }
-  };
+  }
 
   return (
     <SidebarProvider>
@@ -148,13 +171,17 @@ export default function DevicesPage() {
                     <TableCell className="max-w-[200px] truncate">{device.purpose}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
-                        <Button variant="outline" size="icon" onClick={() => {
-                          setEditingDevice(device);
-                          setIsModalOpen(true);
-                        }}>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            setEditingDevice(device)
+                            setIsModalOpen(true)
+                          }}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="destructive" size="icon" onClick={() => handleDeleteDevice(device.deviceID)}>
+                        <Button variant="destructive" size="icon" onClick={() => confirmDeleteDevice(device)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -167,14 +194,38 @@ export default function DevicesPage() {
 
           <DeviceModal
             isOpen={isModalOpen}
-            onClose={() => { setIsModalOpen(false); setEditingDevice(null); }}
+            onClose={() => {
+              setIsModalOpen(false)
+              setEditingDevice(null)
+            }}
             onSubmit={handleAddOrUpdateDevice}
             initialData={editingDevice || undefined}
             isEditing={!!editingDevice}
           />
+
+          <AlertDialog open={!!deviceToDelete} onOpenChange={(open) => !open && setDeviceToDelete(null)}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Device</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete "{deviceToDelete?.deviceName}"? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteDevice}
+                  disabled={isDeleting}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </SidebarInset>
     </SidebarProvider>
-  );
+  )
 }
 

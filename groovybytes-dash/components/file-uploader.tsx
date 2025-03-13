@@ -27,7 +27,7 @@ export function FileUploader({ onFileUpload }: FileUploaderProps) {
         setFile(selectedFile)
         setError(null)
       } else {
-        setError("Please select a JSON, XLSX, CSV, PDF file.")
+        setError("Please select a JSON, XLSX, CSV, or PDF file.")
         setFile(null)
       }
     }
@@ -49,8 +49,7 @@ export function FileUploader({ onFileUpload }: FileUploaderProps) {
       }
 
       setProgress(100)
-    } catch (_err) {
-      console.warn(_err);
+    } catch (err) {
       setError("An error occurred during upload.")
     } finally {
       setUploading(false)

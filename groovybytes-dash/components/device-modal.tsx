@@ -27,10 +27,10 @@ interface DeviceModalProps {
 
 export function DeviceModal({ isOpen, onClose, onSubmit, initialData, isEditing = false }: DeviceModalProps) {
   const [formData, setFormData] = useState<DeviceFormData>({
-    deviceName: initialData?.deviceName || "",
-    sensorType: initialData?.sensorType || "",
-    location: initialData?.location || "",
-    purpose: initialData?.purpose || "",  
+    deviceName: "",
+    sensorType: "",
+    location: "",
+    purpose: "",
   })
 
   useEffect(() => {
@@ -57,7 +57,6 @@ export function DeviceModal({ isOpen, onClose, onSubmit, initialData, isEditing 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSubmit(formData)
-    onClose()
   }
 
   return (
