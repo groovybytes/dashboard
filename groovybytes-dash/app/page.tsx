@@ -3,7 +3,6 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LineChart } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 export default function HomePage() {

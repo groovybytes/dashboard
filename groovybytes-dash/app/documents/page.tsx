@@ -264,7 +264,9 @@ export default function DocumentsPage() {
             <Card>
               <CardContent className="pt-6">
                 <FileUploader onFileUpload={handleFileUpload} />
-                <p className="text-xs text-muted-foreground mt-2">Supported file types: JSON, XLSX, CSV, PDF</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Supported file types: JSON, XLSX, CSV, PDF
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -275,7 +277,11 @@ export default function DocumentsPage() {
               {documents.length > 3 && (
                 <Button variant="link" onClick={() => setShowAll(!showAll)}>
                   {showAll ? "Show Less" : "Show All"}
-                  <ChevronRight className={`ml-1 h-4 w-4 transition-transform ${showAll ? "rotate-90" : ""}`} />
+                  <ChevronRight
+                    className={`ml-1 h-4 w-4 transition-transform ${
+                      showAll ? "rotate-90" : ""
+                    }`}
+                  />
                 </Button>
               )}
             </div>
@@ -288,7 +294,9 @@ export default function DocumentsPage() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-8">
                   <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="font-medium text-lg mb-2">No documents found</h3>
+                  <h3 className="font-medium text-lg mb-2">
+                    No documents found
+                  </h3>
                   <p className="text-muted-foreground text-center max-w-md mb-4">
                     Upload JSON, XLSX, CSV, or PDF files to see them here
                   </p>
@@ -300,7 +308,10 @@ export default function DocumentsPage() {
                   <Card key={doc.id} className="overflow-hidden">
                     <CardHeader className="pb-2">
                       <div className="flex justify-between items-start">
-                        <CardTitle className="text-base font-medium truncate" title={doc.name}>
+                        <CardTitle
+                          className="text-base font-medium truncate"
+                          title={doc.name}
+                        >
                           {doc.name}
                         </CardTitle>
                       </div>
@@ -312,12 +323,16 @@ export default function DocumentsPage() {
                           <Badge variant="outline" className="mb-1">
                             {doc.type.toUpperCase()}
                           </Badge>
-                          <p className="text-sm text-muted-foreground">{formatFileSize(doc.size)}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatFileSize(doc.size)}
+                          </p>
                         </div>
                       </div>
                     </CardContent>
                     <CardFooter className="flex justify-between pt-2">
-                      <span className="text-xs text-muted-foreground">{formatDate(doc.uploadedAt)}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDate(doc.uploadedAt)}
+                      </span>
                       <div className="flex space-x-1">
                         <Button
                           variant="ghost"
@@ -354,16 +369,22 @@ export default function DocumentsPage() {
             )}
           </div>
 
-          <AlertDialog open={!!documentToDelete} onOpenChange={(open) => !open && setDocumentToDelete(null)}>
+          <AlertDialog
+            open={!!documentToDelete}
+            onOpenChange={(open) => !open && setDocumentToDelete(null)}
+          >
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete Document</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to delete "{documentToDelete?.name}"? This action cannot be undone.
+                  Are you sure you want to delete &quot;{documentToDelete?.name}
+                  &quot;? This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                <AlertDialogCancel disabled={isDeleting}>
+                  Cancel
+                </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDeleteDocument}
                   disabled={isDeleting}
@@ -377,5 +398,5 @@ export default function DocumentsPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }
