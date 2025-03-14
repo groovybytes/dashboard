@@ -16,7 +16,8 @@
     {
       "route": "/*.wasm",
       "methods": [
-        "GET", "HEAD"
+        "GET",
+        "HEAD"
       ],
       "headers": {
         "Cache-Control": "public, max-age=86400",
@@ -82,10 +83,28 @@
   },
   "auth": {
     "identityProviders": {
+      "customOpenIdConnectProviders": {
+        "aadb2c": {
+          "registration": {
+            "clientIdSettingName": "AADB2C_PROVIDER_CLIENT_ID",
+            "clientCredential": {
+              "clientSecretSettingName": "AADB2C_PROVIDER_CLIENT_SECRET"
+            },
+            "openIdConnectConfiguration": {
+              "wellKnownOpenIdConfiguration": "https://groovybytesb2c.b2clogin.com/groovybytesb2c.onmicrosoft.com/B2C_1_Signup_Login/v2.0/.well-known/openid-configuration"
+            }
+          },
+          "login": {
+            "nameClaimType": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier",
+            "scopes": [],
+            "loginParameterNames": []
+          }
+        }
+      },
       "azureActiveDirectory": {
         "userDetailsClaim": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
         "registration": {
-          "openIdIssuer": "https://43c83900-693c-4148-ac78-9ebdeb220f00.ciamlogin.com/43c83900-693c-4148-ac78-9ebdeb220f00/v2.0",
+          "openIdIssuer": "https://groovybytesb2c.b2clogin.com/groovybytesb2c.onmicrosoft.com/v2.0",
           "clientIdSettingName": "AZURE_CLIENT_ID",
           "clientSecretSettingName": "AZURE_CLIENT_SECRET"
         }
