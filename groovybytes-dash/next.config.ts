@@ -13,13 +13,11 @@ const nextConfig: NextConfig = {
       "source": "/login/github",
       "destination": "/.auth/login/github",
       "permanent": false
-    }
-  ],
-
-  rewrites: async () => [
+    },
     {
       "source": "/login",
-      "destination": "/.auth/login/aad"
+      "destination": "/.auth/login/aad",
+      "permanent": false
     }
   ]
 };
