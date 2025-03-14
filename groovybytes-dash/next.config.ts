@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
     },
     {
       "source": "/login",
-      "destination": "/.auth/login/aadb2c",
+      "destination": "/.auth/login/aad",
       "permanent": false
     }
   ]

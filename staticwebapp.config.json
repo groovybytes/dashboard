@@ -52,7 +52,7 @@
     },
     {
       "route": "/login",
-      "rewrite": "/.auth/login/aadb2c"
+      "rewrite": "/.auth/login/aad"
     },
     {
       "route": "/login/github",
@@ -99,6 +99,14 @@
             "scopes": [],
             "loginParameterNames": []
           }
+        }
+      },
+      "azureActiveDirectory": {
+        "userDetailsClaim": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+        "registration": {
+          "openIdIssuer": "https://groovybytesb2c.b2clogin.com/a8033281-c9f5-4ef3-9cc6-710d6df130ae/v2.0/",
+          "clientIdSettingName": "AZURE_CLIENT_ID",
+          "clientSecretSettingName": "AZURE_CLIENT_SECRET"
         }
       }
     }
