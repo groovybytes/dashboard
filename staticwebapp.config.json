@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json.schemastore.org/staticwebapp.config.json",
+  "trailingSlash": "auto",
+  "globalHeaders": {
+    "content-security-policy": "default-src https: 'unsafe-eval' 'unsafe-inline'; object-src 'none'; font-src data: https:; img-src https: blob: data:; worker-src https: blob:; media-src blob: https:",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, PUT"
+  },
+  "mimeTypes": {
+    ".json": "text/json",
+    ".wasm": "application/wasm",
+    ".woff": "font/woff",
+    ".woff2": "font/woff2"
+  },
+  "routes": [
+    {
+      "route": "/*.wasm",
+      "methods": [
+        "GET"
+      ],
+      "headers": {
+        "Cache-Control": "public, max-age=86400",
+        "Content-Type": "application/wasm"
+      }
+    },
+    {
+      "route": "/*.woff",
+      "methods": [
+        "GET"
+      ],
+      "headers": {
+        "Cache-Control": "public, max-age=86400",
+        "Content-Type": "font/woff"
+      }
+    },
+    {
+      "route": "/*.woff2",
+      "methods": [
+        "GET"
+      ],
+      "headers": {
+        "Cache-Control": "public, max-age=86400",
+        "Content-Type": "font/woff2"
+      }
+    },
+    {
+      "route": "/registered/*",
+      "methods": [
+        "GET"
+      ],
+      "allowedRoles": [
+        "registeredusers"
+      ]
+    },
+    {
+      "route": "/admin/*",
+      "methods": [
+        "PUT",
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "allowedRoles": [
+        "administrator"
+      ]
+    },
+    {
+      "route": "/auth/*",
+      "allowedRoles": [
+        "authenticated"
+      ]
+    },
+    {
+      "route": "/logout",
+      "redirect": "/.auth/logout"
+    },
+    {
+      "route": "/login",
+      "rewrite": "/.auth/login/aad"
+    },
+    {
+      "route": "/login/github",
+      "redirect": "/.auth/login/github"
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "index.html",
+    "exclude": [
+      "*.{png,jpg,webp,gif}",
+      "*.css",
+      "*.js"
+    ]
+  },
+  "responseOverrides": {
+    "400": {
+      "rewrite": "/invalid-invitation-error.html"
+    },
+    "401": {
+      "statusCode": 302,
+      "redirect": "/.auth/login/aad"
+    },
+    "403": {
+      "rewrite": "/custom-forbidden-page.html"
+    },
+    "404": {
+      "rewrite": "/404.html"
+    }
+  },
+  "platform": {
+    "apiRuntime": "node:18"
+  },
+  "auth": {
+    "identityProviders": {
+      "customOpenIdConnectProviders": {
+        "aad-external-auth": {
+          "enabled": true,
+          "login": {
+            "nameClaimType": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name",
+            "scopes": [
+              "openid",
+              "profile",
+              "email"
+            ],
+            "loginParameterNames": []
+          },
+          "registration": {
+            "clientIdSettingName": "AZURE_CLIENT_ID",
+            "openIdConnectConfiguration": {
+              "wellKnownOpenIdConfiguration": "https://iwingaming.ciamlogin.com/iwingaming.onmicrosoft.com/v2.0/.well-known/openid-configuration"
+            },
+            "clientCredential": {
+              "clientSecretSettingName": "AZURE_CLIENT_SECRET"
+            }
+          }
+        }
+      },
+      "azureActiveDirectory": {
+        "registration": {
+          "openIdIssuer": "https://login.microsoftonline.com/b8703a55-cc6f-45f9-a718-24f08cbc907d/v2.0",
+          "clientIdSettingName": "AZURE_CLIENT_ID",
+          "clientSecretSettingName": "AZURE_CLIENT_SECRET"
+        }
+      }
+    }
+  }
+}
