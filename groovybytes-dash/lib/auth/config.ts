@@ -10,6 +10,11 @@ export const AZURE_TENANT_NAME = process.env.AZURE_TENANT_NAME ?? "azure_tenant_
 export const BASE_URL = process.env.BASE_URL ?? "http://localhost:3000";
 export const REDIRECT_URI = process.env.REDIRECT_URI ?? `${BASE_URL}/api/auth/redirect`;
 
+console.log({
+  BASE_URL,
+  REDIRECT_URI
+})
+
 export const SIGN_UP_SIGN_IN_POLICY_NAME = process.env.SIGN_UP_SIGN_IN_POLICY_NAME ?? "B2C_1_Signup_Login";
 export const RESET_PASSWORD_POLICY_NAME = process.env.RESET_PASSWORD_POLICY_NAME ?? "B2C_1_Password_Reset";
 export const EDIT_PROFILE_POLICY_NAME = process.env.EDIT_PROFILE_POLICY_NAME ?? "B2C_1_Profile_Editing";

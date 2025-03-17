@@ -1,11 +1,18 @@
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { ConfidentialClientApplication, CryptoProvider, AuthorizationUrlRequest } from '@azure/msal-node';
-import { KV_AUTHORIY, KV_CHALLENGE_KEY, KV_CHALLENGE_METHOD_KEY, KV_STATE_KEY, KV_VERIFIER_KEY, MSAL_CONFIG, MSAL_SCOPES, REDIRECT_URI, RESET_PASSWORD_POLICY_AUTHORITY } from '@/lib/auth/config'; // Your MSAL/graph settings
+import { EDIT_PROFILE_POLICY_AUTHORITY, KV_AUTHORIY, KV_CHALLENGE_KEY, KV_CHALLENGE_METHOD_KEY, KV_STATE_KEY, KV_VERIFIER_KEY, MSAL_CONFIG, MSAL_SCOPES, REDIRECT_URI, RESET_PASSWORD_POLICY_AUTHORITY, SIGN_UP_SIGN_IN_POLICY_AUTHORITY } from '@/lib/auth/config'; // Your MSAL/graph settings
 import { generateRandomHex } from '@/lib/auth/utils';
 import { kv } from '@/lib/kv';
 
-export async function GET() {
+export async function GET(_req: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  const { slug } = await params;
+
   try {
+    console.log(MSAL_CONFIG);
+    
     // Instantiate your ConfidentialClientApplication
     const clientApplication = new ConfidentialClientApplication(MSAL_CONFIG);
     const cryptoProvider = new CryptoProvider();
@@ -19,7 +26,21 @@ export async function GET() {
     await kv.set(KV_CHALLENGE_KEY, challenge);
     await kv.set(KV_CHALLENGE_METHOD_KEY, 'S256');
     await kv.set(KV_STATE_KEY, state);
-    await kv.set(KV_AUTHORIY, RESET_PASSWORD_POLICY_AUTHORITY);
+
+    let authority: string | undefined;
+    switch (slug) {
+      case "login":
+        authority = SIGN_UP_SIGN_IN_POLICY_AUTHORITY;
+        break;
+      case "password":
+        authority = RESET_PASSWORD_POLICY_AUTHORITY;
+        break;
+      case "profile":
+        authority = EDIT_PROFILE_POLICY_AUTHORITY;
+        break;
+    }
+
+    await kv.set(KV_AUTHORIY, authority);
 
     // Prepare the parameters for the auth code URL request
     const authCodeUrlParameters: AuthorizationUrlRequest = {
@@ -27,7 +48,7 @@ export async function GET() {
       scopes: MSAL_SCOPES,
       codeChallenge: challenge,
       codeChallengeMethod: 'S256',
-      authority: RESET_PASSWORD_POLICY_AUTHORITY,
+      authority,
       state,
     };
 
@@ -37,7 +58,7 @@ export async function GET() {
     // In a web app you would send the URL to the client (which can then redirect the browser)
     return NextResponse.redirect(authCodeUrl);
   } catch (error) {
-    console.error('Error in auth/init:', error);
+    console.error(`Error in auth/${slug}:`, error);
     return NextResponse.json({ error: 'Failed to generate auth URL' }, { status: 500 });
   }
 }
