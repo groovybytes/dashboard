@@ -48,15 +48,11 @@
     },
     {
       "route": "/logout",
-      "redirect": "/.auth/logout"
+      "redirect": "/api/auth/logout"
     },
     {
       "route": "/login",
-      "rewrite": "/.auth/login/aad"
-    },
-    {
-      "route": "/login/github",
-      "redirect": "/.auth/login/github"
+      "rewrite": "/api/auth/login"
     }
   ],
   "navigationFallback": {
