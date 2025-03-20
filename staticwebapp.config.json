@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json.schemastore.org/staticwebapp.config.json",
+  "trailingSlash": "auto",
+  "globalHeaders": {
+    "content-security-policy": "default-src https: 'unsafe-eval' 'unsafe-inline'; object-src 'none'; font-src data: https:; img-src https: blob: data:; worker-src https: blob:; media-src blob: https:",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, HEAD"
+  },
+  "mimeTypes": {
+    ".json": "text/json",
+    ".wasm": "application/wasm",
+    ".woff": "font/woff",
+    ".woff2": "font/woff2"
+  },
+  "routes": [
+    {
+      "route": "/*.wasm",
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "headers": {
+        "Cache-Control": "public, max-age=86400",
+        "Content-Type": "application/wasm"
+      }
+    },
+    {
+      "route": "/*.woff",
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "headers": {
+        "Cache-Control": "public, max-age=86400",
+        "Content-Type": "font/woff"
+      }
+    },
+    {
+      "route": "/*.woff2",
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "headers": {
+        "Cache-Control": "public, max-age=86400",
+        "Content-Type": "font/woff2"
+      }
+    },
+    {
+      "route": "/logout",
+      "redirect": "/api/auth/logout"
+    },
+    {
+      "route": "/login",
+      "rewrite": "/api/auth/login"
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "index.html",
+    "exclude": [
+      "*.{png,jpg,webp,gif}",
+      "*.css",
+      "*.js"
+    ]
+  },
+  "responseOverrides": {
+    "400": {
+      "rewrite": "/invalid-invitation-error.html"
+    },
+    "403": {
+      "rewrite": "/custom-forbidden-page.html"
+    },
+    "404": {
+      "rewrite": "/404.html"
+    }
+  },
+  "platform": {
+    "apiRuntime": "node:18"
+  },
+  "auth": {
+    "identityProviders": {
+      "customOpenIdConnectProviders": {
+        "aadb2c": {
+          "registration": {
+            "clientIdSettingName": "AADB2C_PROVIDER_CLIENT_ID",
+            "clientCredential": {
+              "clientSecretSettingName": "AADB2C_PROVIDER_CLIENT_SECRET"
+            },
+            "openIdConnectConfiguration": {
+              "wellKnownOpenIdConfiguration": "https://groovybytesb2c.b2clogin.com/groovybytesb2c.onmicrosoft.com/B2C_1_Signup_Login/v2.0/.well-known/openid-configuration"
+            }
+          },
+          "login": {
+            "nameClaimType": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier",
+            "scopes": [],
+            "loginParameterNames": []
+          }
+        }
+      },
+      "azureActiveDirectory": {
+        "userDetailsClaim": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+        "registration": {
+          "openIdIssuer": "https://groovybytesb2c.b2clogin.com/a8033281-c9f5-4ef3-9cc6-710d6df130ae/v2.0/",
+          "clientIdSettingName": "AZURE_CLIENT_ID",
+          "clientSecretSettingName": "AZURE_CLIENT_SECRET"
+        }
+      }
+    }
+  }
+}

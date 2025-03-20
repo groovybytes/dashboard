@@ -40,16 +40,17 @@ export function FileUploader({ onFileUpload }: FileUploaderProps) {
     setProgress(0)
 
     try {
-      await onFileUpload(file)
+      await onFileUpload(file);
 
       // Simulate upload progress
       for (let i = 0; i <= 100; i += 10) {
-        setProgress(i)
-        await new Promise((resolve) => setTimeout(resolve, 200))
+        setProgress(i);
+        await new Promise((resolve) => setTimeout(resolve, 200));
       }
 
-      setProgress(100)
-    } catch (err) {
+      setProgress(100);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_) {
       setError("An error occurred during upload.")
     } finally {
       setUploading(false)
