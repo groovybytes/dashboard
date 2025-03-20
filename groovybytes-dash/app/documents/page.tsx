@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { FileUploader } from "@/components/file-uploader"
+import { FileUploader } from "@/components/file-uploader2"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -19,6 +19,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { BlobServiceClient } from "@azure/storage-blob"
+
+// Azure Blob Storage configuration
+const AZURE_STORAGE_CONNECTION_STRING = "DefaultEndpointsProtocol=https;AccountName=groovybytesassetsstorage;AccountKey=FrNFiHf0Y8Y3y6Jj4Gcq9CED/FvVbaFoHxQdbpBbGHBEPD+2nOEzirCMVfcAy6GTdSoyNH4k/Jvw+AStdTgNuQ==;EndpointSuffix=core.windows.net"
+const CONTAINER_NAME = "your-container-name"
 
 interface Document {
   id: string
@@ -29,97 +34,76 @@ interface Document {
   url: string
 }
 
-// Simulated Azure Blob Storage service
+const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING)
+const containerClient = blobServiceClient.getContainerClient(CONTAINER_NAME)
+
+// Azure Blob Storage service
 const blobStorage = {
   listDocuments: async (): Promise<Document[]> => {
-    console.log("Fetching documents from Azure Blob Storage...")
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve([
-          {
-            id: "1",
-            name: "sensor_data_2023.json",
-            type: "json",
-            size: 1024 * 1024 * 2.5, // 2.5 MB
-            uploadedAt: "2023-10-15T14:30:00Z",
-            url: "#",
-          },
-          {
-            id: "2",
-            name: "device_readings_q1.csv",
-            type: "csv",
-            size: 1024 * 512, // 512 KB
-            uploadedAt: "2023-09-22T09:15:00Z",
-            url: "#",
-          },
-          {
-            id: "3",
-            name: "maintenance_schedule.xlsx",
-            type: "xlsx",
-            size: 1024 * 1024 * 1.2, // 1.2 MB
-            uploadedAt: "2023-11-05T11:45:00Z",
-            url: "#",
-          },
-          {
-            id: "4",
-            name: "system_documentation.pdf",
-            type: "pdf",
-            size: 1024 * 1024 * 3.8, // 3.8 MB
-            uploadedAt: "2023-10-10T13:25:00Z",
-            url: "#",
-          },
-          {
-            id: "5",
-            name: "historical_data_2022.csv",
-            type: "csv",
-            size: 1024 * 1024 * 5.7, // 5.7 MB
-            uploadedAt: "2023-07-12T13:10:00Z",
-            url: "#",
-          },
-          {
-            id: "6",
-            name: "device_manual.pdf",
-            type: "pdf",
-            size: 1024 * 1024 * 8.2, // 8.2 MB
-            uploadedAt: "2023-08-18T15:40:00Z",
-            url: "#",
-          },
-        ])
-      }, 800)
-    })
-  },
-  uploadDocument: async (file: File): Promise<Document> => {
-    console.log("Uploading document to Azure Blob Storage:", file.name)
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          id: Math.random().toString(36).substr(2, 9),
-          name: file.name,
-          type: file.name.split(".").pop() || "",
-          size: file.size,
-          uploadedAt: new Date().toISOString(),
-          url: "#",
+    try {
+      let blobs = []
+      for await (const blob of containerClient.listBlobsFlat()) {
+        const url = `${containerClient.url}/${blob.name}`
+        blobs.push({
+          id: blob.name,
+          name: blob.name,
+          type: blob.name.split(".").pop() || "unknown",
+          size: blob.properties.contentLength || 0,
+          uploadedAt: blob.properties.createdOn?.toISOString() || "Unknown",
+          url,
         })
-      }, 1500)
-    })
+      }
+      return blobs
+    } catch (error) {
+      console.error("Error listing blobs:", error)
+      throw error
+    }
   },
+
+  uploadDocument: async (file: File): Promise<Document> => {
+    try {
+      const blockBlobClient = containerClient.getBlockBlobClient(file.name)
+      await blockBlobClient.uploadData(await file.arrayBuffer(), {
+        blobHTTPHeaders: { blobContentType: file.type },
+      })
+      return {
+        id: file.name,
+        name: file.name,
+        type: file.name.split(".").pop() || "unknown",
+        size: file.size,
+        uploadedAt: new Date().toISOString(),
+        url: blockBlobClient.url,
+      }
+    } catch (error) {
+      console.error("Error uploading blob:", error)
+      throw error
+    }
+  },
+
   deleteDocument: async (documentId: string): Promise<void> => {
-    console.log("Deleting document from Azure Blob Storage:", documentId)
-    return new Promise((resolve) => {
-      // Simulate API call delay
-      setTimeout(() => {
-        resolve()
-      }, 1000)
-    })
+    try {
+      const blockBlobClient = containerClient.getBlockBlobClient(documentId)
+      await blockBlobClient.delete()
+    } catch (error) {
+      console.error("Error deleting blob:", error)
+      throw error
+    }
   },
+
   downloadDocument: async (document: Document): Promise<void> => {
-    console.log("Downloading document from Azure Blob Storage:", document.name)
-    return new Promise((resolve) => {
-      // Simulate download delay
-      setTimeout(() => {
-        resolve()
-      }, 1000)
-    })
+    try {
+      const response = await fetch(document.url)
+      const blob = await response.blob()
+      const link = document.createElement("a")
+      link.href = URL.createObjectURL(blob)
+      link.download = document.name
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } catch (error) {
+      console.error("Error downloading blob:", error)
+      throw error
+    }
   },
 }
 
@@ -171,12 +155,16 @@ export default function DocumentsPage() {
     }
   }
 
+  const confirmDeleteDocument = (document: Document) => {
+    setDocumentToDelete(document)
+  }
+
   const handleDeleteDocument = async () => {
     if (!documentToDelete) return
 
     setIsDeleting(true)
     try {
-      await blobStorage.deleteDocument(documentToDelete.id)
+      await blobStorage.deleteDocument(documentToDelete.id, documentToDelete.name)
       // Update local state to remove the deleted document
       setDocuments(documents.filter((doc) => doc.id !== documentToDelete.id))
       toast({
@@ -334,7 +322,7 @@ export default function DocumentsPage() {
                           size="sm"
                           className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                           title="Delete"
-                          onClick={() => setDocumentToDelete(doc)}
+                          onClick={() => confirmDeleteDocument(doc)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -379,3 +367,4 @@ export default function DocumentsPage() {
     </SidebarProvider>
   )
 }
+
