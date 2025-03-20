@@ -30,7 +30,7 @@ interface Device {
   connectionString?: string
 }
 
-const API_BASE_URL = "http://127.0.0.1:5000"
+const API_BASE_URL = "https://groovybytes-platform-management.azurewebsites.net"
 
 export default function DevicesPage() {
   const [devices, setDevices] = useState<Device[]>([])
@@ -47,7 +47,7 @@ export default function DevicesPage() {
   const fetchDevices = async () => {
     setIsLoading(true)
     try {
-      const res = await fetch(`${API_BASE_URL}/get-devices`)
+      const res = await fetch(`${API_BASE_URL}/api/devices/fetch`)
       const data = await res.json()
       setDevices(data)
     } catch (error) {
@@ -62,14 +62,13 @@ export default function DevicesPage() {
     setIsLoading(true)
     try {
       const newDevice = {
-        deviceID: `device-${Date.now()}`, // Auto-generate unique deviceID
         ...deviceData,
       }
 
       const method = editingDevice ? "PUT" : "POST"
       const url = editingDevice
-        ? `${API_BASE_URL}/update-device/${deviceData.deviceID}`
-        : `${API_BASE_URL}/register-device`
+        ? `${API_BASE_URL}/api/devices/update/${deviceData.deviceID}`
+        : `${API_BASE_URL}/api/devices/register`
 
       await fetch(url, {
         method,
@@ -104,7 +103,7 @@ export default function DevicesPage() {
     try {
       console.log("Deleting device:", deviceToDelete.deviceID)
 
-      const res = await fetch(`${API_BASE_URL}/delete-device/${deviceToDelete.deviceID}`, {
+      const res = await fetch(`${API_BASE_URL}/api/device/delete/${deviceToDelete.deviceID}`, {
         method: "DELETE",
       })
 
