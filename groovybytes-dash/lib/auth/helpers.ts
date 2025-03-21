@@ -1,4 +1,4 @@
-// lib/authHelpers.ts
+// lib/auth/helpers.ts
 import type { ConfidentialClientApplication, SilentFlowRequest, RefreshTokenRequest, AuthenticationResult } from '@azure/msal-node';
 import { InteractionRequiredAuthError } from '@azure/msal-node';
 import { MSAL_SCOPES } from './config';
@@ -35,6 +35,7 @@ export async function getToken(
         account: accounts[0],
         scopes,
       };
+
       return await clientApplication.acquireTokenSilent(silentRequest);
     } catch (error) {
       console.error('Silent token acquisition failed:', error);
@@ -44,6 +45,7 @@ export async function getToken(
           accounts[0].idTokenClaims!.rtid as string,
           scopes
         );
+
         if (refreshToken) return refreshToken;
       }
     }

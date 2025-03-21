@@ -1,31 +1,35 @@
+import type { AuthorizationUrlRequest } from '@azure/msal-node';
 import type { NextRequest } from 'next/server';
+
 import { NextResponse } from 'next/server';
-import { ConfidentialClientApplication, CryptoProvider, AuthorizationUrlRequest } from '@azure/msal-node';
-import { EDIT_PROFILE_POLICY_AUTHORITY, KV_AUTHORIY, KV_CHALLENGE_KEY, KV_CHALLENGE_METHOD_KEY, KV_STATE_KEY, KV_VERIFIER_KEY, MSAL_CONFIG, MSAL_SCOPES, REDIRECT_URI, RESET_PASSWORD_POLICY_AUTHORITY, SIGN_UP_SIGN_IN_POLICY_AUTHORITY } from '@/lib/auth/config'; // Your MSAL/graph settings
+import { 
+  KV_CHALLENGE_KEY, KV_CHALLENGE_METHOD_KEY, KV_VERIFIER_KEY, 
+  MSAL_CONFIG, MSAL_SCOPES, REDIRECT_URI, 
+  RESET_PASSWORD_POLICY_AUTHORITY, SIGN_UP_SIGN_IN_POLICY_AUTHORITY, EDIT_PROFILE_POLICY_AUTHORITY, 
+} from '@/lib/auth/config';
+import { 
+  ConfidentialClientApplication, 
+  CryptoProvider, 
+} from '@azure/msal-node';
+
 import { generateRandomHex } from '@/lib/auth/utils';
+import { createToken } from '@/lib/auth/token';
 import { kv } from '@/lib/kv';
 
-export async function GET(_req: NextRequest,
+export async function GET(
+  req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const referer = req.headers.get("referer")!;
+  console.log({
+    referer
+  })
   const { slug } = await params;
 
   try {
-    console.log(MSAL_CONFIG);
-    
     // Instantiate your ConfidentialClientApplication
     const clientApplication = new ConfidentialClientApplication(MSAL_CONFIG);
     const cryptoProvider = new CryptoProvider();
-
-    // Generate PKCE codes and a random state value
-    const { verifier, challenge } = await cryptoProvider.generatePkceCodes();
-    const state = generateRandomHex(32);
-
-    // Save these values to your key–value store (you can replace kv with your own persistence mechanism)
-    await kv.set(KV_VERIFIER_KEY, verifier);
-    await kv.set(KV_CHALLENGE_KEY, challenge);
-    await kv.set(KV_CHALLENGE_METHOD_KEY, 'S256');
-    await kv.set(KV_STATE_KEY, state);
 
     let authority: string | undefined;
     switch (slug) {
@@ -40,7 +44,20 @@ export async function GET(_req: NextRequest,
         break;
     }
 
-    await kv.set(KV_AUTHORIY, authority);
+    // Generate PKCE codes and a random state value
+    const { verifier, challenge } = await cryptoProvider.generatePkceCodes();
+
+    // Create a secure token that encapsulates both a random state (for CSRF) and the authority.
+    const state = await createToken({
+      state: generateRandomHex(32),
+      authority: authority!,
+      referer
+    });
+
+    // Save these values to your key–value store (you can replace kv with your own persistence mechanism)
+    await kv.set([state, ...KV_VERIFIER_KEY], verifier);
+    await kv.set([state, ...KV_CHALLENGE_KEY], challenge);
+    await kv.set([state, ...KV_CHALLENGE_METHOD_KEY], 'S256');
 
     // Prepare the parameters for the auth code URL request
     const authCodeUrlParameters: AuthorizationUrlRequest = {

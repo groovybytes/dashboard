@@ -11,12 +11,7 @@ const nextConfig: NextConfig = {
   redirects: async () => [
     {
       "source": "/logout",
-      "destination": "/.auth/logout",
-      "permanent": false
-    },
-    {
-      "source": "/login/github",
-      "destination": "/.auth/login/github",
+      "destination": "/api/auth/logout",
       "permanent": false
     },
     {

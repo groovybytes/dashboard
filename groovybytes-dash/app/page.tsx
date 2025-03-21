@@ -1,16 +1,25 @@
-import { AppSidebar } from "@/components/app-sidebar"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { LineChart } from "lucide-react"
-import Link from "next/link"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AppSidebar } from "@/components/app-sidebar";
+import { LineChart } from "lucide-react";
 
-export default function HomePage() {
+import { decryptJWE } from "@/lib/auth/jwt";
+import { cookies } from "next/headers";
+import Link from "next/link";
+
+export default async function HomePage() {
+  const cookieStore = await cookies();
+  const session = cookieStore.get("session")?.value;
+
+  const profile = session ? await decryptJWE(session!) : null;
+
   return (
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
         <div className="flex flex-col gap-6 p-6">
+          <div>{JSON.stringify(profile)}</div>
           <div className="flex gap-1">
             <Link
               className="flex px-3 py-1.5 rounded-md hover:bg-slate-400/20"
