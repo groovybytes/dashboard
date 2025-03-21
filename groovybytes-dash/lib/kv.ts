@@ -19,6 +19,7 @@ import Redis from "ioredis";
 
 import { createStorage } from "unstorage";
 import redisDriver from "unstorage/drivers/redis";
+import lruCacheDriver from "unstorage/drivers/lru-cache";
 
 import process from "node:process";
 
@@ -368,15 +369,17 @@ export async function initializeStorage(
     useCluster,
   );
 
+  const _host = redisConfig?.host ?? process.env.REDIS_HOST; 
+
   // Create the Redis driver using the unstorage Redis driver.
-  const driver = redisDriver(driverOptions);
+  const driver = _host ? redisDriver(driverOptions) : lruCacheDriver({});
 
   // Create the unstorage storage instance.
   const storage = createStorage({ driver });
 
   // If using Managed Identity, attach token refresh logic.
-  if (useEntraIdentity && credential) {
-    const redisClient = driver.getInstance!();
+  if (useEntraIdentity && credential && _host) {
+    const redisClient = driver.getInstance!() as Redis | Cluster;
     const refreshInterval = redisConfig?.tokenRefreshIntervalMs || (
       accessToken?.expiresOnTimestamp ?
         (accessToken!.expiresOnTimestamp - Date.now()) :
