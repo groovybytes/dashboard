@@ -94,12 +94,12 @@ const blobStorage = {
     try {
       const response = await fetch(document.url)
       const blob = await response.blob()
-      const link = document.createElement("a")
+      const link = globalThis?.document?.createElement("a")
       link.href = URL.createObjectURL(blob)
       link.download = document.name
-      document.body.appendChild(link)
+      globalThis?.document?.body?.appendChild(link);
       link.click()
-      document.body.removeChild(link)
+      globalThis?.document?.body?.removeChild(link)
     } catch (error) {
       console.error("Error downloading blob:", error)
       throw error
@@ -164,7 +164,7 @@ export default function DocumentsPage() {
 
     setIsDeleting(true)
     try {
-      await blobStorage.deleteDocument(documentToDelete.id, documentToDelete.name)
+      await blobStorage.deleteDocument(documentToDelete.id)
       // Update local state to remove the deleted document
       setDocuments(documents.filter((doc) => doc.id !== documentToDelete.id))
       toast({
