@@ -8,3 +8,11 @@
 //         //... other options
 //       }),
 // })
+
+export const auth = {
+    handler() {
+        return Promise.resolve(new Response("Hello World"))
+    }
+}
+
+export {}
