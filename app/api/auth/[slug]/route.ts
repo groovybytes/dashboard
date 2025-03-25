@@ -59,6 +59,13 @@ export async function GET(
     await kv.set([state, ...KV_CHALLENGE_KEY], challenge);
     await kv.set([state, ...KV_CHALLENGE_METHOD_KEY], 'S256');
 
+    console.log({
+      state,
+      KV_VERIFIER_KEY,
+      KV_CHALLENGE_KEY,
+      KV_CHALLENGE_METHOD_KEY,
+    })
+
     // Prepare the parameters for the auth code URL request
     const authCodeUrlParameters: AuthorizationUrlRequest = {
       redirectUri: REDIRECT_URI,
@@ -71,6 +78,10 @@ export async function GET(
 
     // Get the auth URL from MSAL
     const authCodeUrl = await clientApplication.getAuthCodeUrl(authCodeUrlParameters);
+
+    console.log({
+      authCodeUrl
+    })
 
     // In a web app you would send the URL to the client (which can then redirect the browser)
     return NextResponse.redirect(authCodeUrl);

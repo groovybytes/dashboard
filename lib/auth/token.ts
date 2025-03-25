@@ -4,6 +4,7 @@ import { SignJWT, jwtVerify, CompactEncrypt, compactDecrypt } from "jose";
 // Import the KV store polyfill (which wraps Redis)
 import { kv } from "../kv";
 import { decodeHex, encodeHex } from "@std/encoding";
+import { error } from "console";
 
 // Define the token expiration time (2 hours = 7200 seconds).
 export const TOKEN_TTL_SECONDS = 7200;
@@ -86,6 +87,19 @@ export async function createToken(payload: { state: string; authority: string, r
   // In production, ensure your KV store (Redis) enforces the TTL.
   await kv.set([encryptedJWT], encodeHex(secret), { expireIn: TOKEN_TTL_SECONDS });
 
+  try {
+    const val = await kv.get<string>([encryptedJWT]);
+    console.log({
+      encryptedJWT,
+      val
+    })
+  } catch (e) {
+    console.warn({
+      error,
+      createToken: "Create Token KV"
+    })
+  }
+
   // 5. Return the encrypted JWT token.
   return encryptedJWT;
 }
@@ -99,6 +113,11 @@ export async function createToken(payload: { state: string; authority: string, r
  * @throws Will throw an error if the token has expired or if the associated secret is not found.
  */
 export async function verifyToken(token: string): Promise<any> {
+
+  console.log({
+    token
+  })
+
   // 1. Retrieve the secret from the external KV store.
   const secretRes = await kv.get<string>([token]);
   if (!secretRes?.value) {

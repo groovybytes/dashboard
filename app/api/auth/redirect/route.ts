@@ -87,6 +87,7 @@ export async function GET(request: NextRequest) {
     // Instead of retrieving a stored random hex state, verify the state token directly.
     // The token's integrity and authenticity are ensured via cryptographic signing and encryption.
     let verifiedStatePayload: { state?: string, authority?: string, referer?: string } = {};
+    
     try {
       verifiedStatePayload = await verifyToken(state);
       console.log("Verified state payload:", verifiedStatePayload);
@@ -232,7 +233,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error in auth/redirect:', error);
     return NextResponse.json(
-      { error: 'Failed to acquire token.' }, 
+      { error: 'Failed to acquire token.', message: error }, 
       { status: 500 }
     );
   }
