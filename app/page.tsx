@@ -4,15 +4,16 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppSidebar } from "@/components/app-sidebar";
 import { LineChart } from "lucide-react";
 
-import { decryptJWE } from "@/lib/auth/jwt";
-import { cookies } from "next/headers";
+// import { decryptJWE } from "@/lib/auth/jwt";
+// import { cookies } from "next/headers";
 import Link from "next/link";
 
 export default async function HomePage() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("session")?.value;
+  // const cookieStore = await cookies();
+  // const session = cookieStore.get("session")?.value;
 
-  const profile = session ? await decryptJWE(session!) : null;
+  // const profile = session ? await decryptJWE(session!) : null;
+  const profile = null;
 
   return (
     <SidebarProvider>
