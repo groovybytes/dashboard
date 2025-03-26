@@ -6,8 +6,8 @@ import { kv } from "../kv";
 import { decodeHex, encodeHex } from "@std/encoding";
 import { error } from "console";
 
-// Define the token expiration time (2 hours = 7200 seconds).
-export const TOKEN_TTL_SECONDS = 7200;
+// Define the token expiration time (2 hours = 7200 seconds * 1000 milliseconds).
+export const TOKEN_TTL_SECONDS = 7200 * 1000;
 
 /**
  * Creates a secure, encrypted JWT token for use in the PKCE authentication flow.
@@ -85,7 +85,9 @@ export async function createToken(payload: { state: string; authority: string, r
 
   // 4. Store the secret externally in the KV store with the encrypted token as the key.
   // In production, ensure your KV store (Redis) enforces the TTL.
-  await kv.set([encryptedJWT], encodeHex(secret), { expireIn: TOKEN_TTL_SECONDS });
+  await kv.set([encryptedJWT], encodeHex(secret), { 
+    expireIn: TOKEN_TTL_SECONDS 
+  });
 
   try {
     const val = await kv.get<string>([encryptedJWT]);

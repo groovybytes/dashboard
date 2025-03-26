@@ -6,7 +6,9 @@ import { NextResponse } from 'next/server';
 import { 
   KV_VERIFIER_KEY, 
   MSAL_CONFIG, MSAL_SCOPES, REDIRECT_URI, 
-  RESET_PASSWORD_POLICY_AUTHORITY, SIGN_UP_SIGN_IN_POLICY_AUTHORITY, EDIT_PROFILE_POLICY_AUTHORITY, 
+  RESET_PASSWORD_POLICY_AUTHORITY, SIGN_UP_SIGN_IN_POLICY_AUTHORITY, EDIT_PROFILE_POLICY_AUTHORITY,
+  LOGOUT_ENDPOINT,
+  BASE_URL, 
 } from '@/lib/auth/config';
 import { ConfidentialClientApplication } from '@azure/msal-node';
 
@@ -21,7 +23,7 @@ export async function GET(request: NextRequest) {
     const state = searchParams.get('state');
     const clientInfo = searchParams.get('client_info') ?? undefined;
 
-    if (!code || !state) {
+    if ((!code || !state) && !(!code && !state)) {
       return NextResponse.json({ error: 'Missing code or state in query parameters.' }, { status: 400 });
     }
 
@@ -89,8 +91,10 @@ export async function GET(request: NextRequest) {
     let verifiedStatePayload: { state?: string, authority?: string, referer?: string } = {};
     
     try {
-      verifiedStatePayload = await verifyToken(state);
-      console.log("Verified state payload:", verifiedStatePayload);
+      if (code && state) {
+        verifiedStatePayload = await verifyToken(state);
+        console.log("Verified state payload:", verifiedStatePayload);
+      }
     } catch (error) {
       console.error("State token verification failed:", error);
       return NextResponse.json(
@@ -100,8 +104,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify authority
-    const authority = verifiedStatePayload.authority;
-    if (!authority) {
+    const authority = verifiedStatePayload.authority ?? LOGOUT_ENDPOINT;
+    if (!authority && (code && state)) {
       return NextResponse.json(
         { error: 'Authority not found in state token.' },
         { status: 400 }
@@ -109,9 +113,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Retrieve the PKCE code verifier from KV storage using the token as part of the key.
-    const codeVerifierRes = await kv.get<string>([state, ...KV_VERIFIER_KEY]);
+    const codeVerifierRes = await kv.get<string>([state ?? "empty_state", ...KV_VERIFIER_KEY]);
     const codeVerifier = codeVerifierRes.value;
-    if (!codeVerifier) {
+    if (!codeVerifier && (code && state)) {
       return NextResponse.json({ error: 'Couldn\'t find code verifier.' }, { status: 400 });
     }
 
@@ -119,15 +123,15 @@ export async function GET(request: NextRequest) {
     const tokenRequest: AuthorizationCodeRequest = {
       redirectUri: REDIRECT_URI,
       scopes: MSAL_SCOPES,
-      code,
-      codeVerifier,
+      code: code ?? "",
+      codeVerifier: codeVerifier ?? "",
       clientInfo,
     };
 
     // You might set cookies or do additional processing here.
     const expiresAt = new Date(Date.now() + (DEFAULT_MAX_AGE * 1000));
     const clientApplication = new ConfidentialClientApplication(MSAL_CONFIG);
-    const referer = verifiedStatePayload.referer ?? "/";
+    const referer = verifiedStatePayload.referer ?? `${BASE_URL}/`;
 
     let sessionPayload: { user: AuthenticationResult['account'], idToken: AuthenticationResult['idToken'] };
     let authResult: AuthenticationResult;
@@ -223,11 +227,14 @@ export async function GET(request: NextRequest) {
       }
 
       default: {
-        console.error('Unrecognized authority:', authority);
-        return NextResponse.json(
-          { error: 'Unrecognized authority in state token.' },
-          { status: 500 }
-        );
+        response = NextResponse.redirect(referer);
+        response.cookies.delete('session');
+        return response;
+        // console.error('Unrecognized authority:', authority);
+        // return NextResponse.json(
+        //   { error: 'Unrecognized authority in state token.' },
+        //   { status: 500 }
+        // );
       }
     }
   } catch (error) {
