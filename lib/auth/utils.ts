@@ -1,4 +1,4 @@
-import { encodeHex } from "@std/encoding";
+import { Buffer } from "node:buffer";
 
 /**
  * Creates a Promise and exposes its `resolve` and `reject` functions, along with the Promise itself.
@@ -165,5 +165,5 @@ export function generateRandomHex(size: number): string {
   crypto.getRandomValues(uint8arr);
 
   // Convert the random values to a hexadecimal string and return it
-  return encodeHex(uint8arr);
+  return Buffer.from(uint8arr).toString('hex');
 }
