@@ -6,7 +6,7 @@
 // With Azure Managed Identity support
 
 (Symbol as any).dispose ??= Symbol("Symbol.dispose");
-
+ 
 import type { TokenCredential, AccessToken } from "@azure/identity";
 import type { Cluster } from "ioredis";
 
@@ -20,6 +20,12 @@ import Redis from "ioredis";
 import { createStorage } from "unstorage";
 import redisDriver from "unstorage/drivers/redis";
 import lruCacheDriver from "unstorage/drivers/lru-cache";
+
+import {
+  ClientAssertionCredential,
+  AuthenticationRequiredError,
+} from '@azure/identity';
+import { getVercelOidcToken } from '@vercel/functions/oidc';
 
 import process from "node:process";
 
