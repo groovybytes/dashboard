@@ -4,23 +4,22 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppSidebar } from "@/components/app-sidebar";
 import { LineChart } from "lucide-react";
 
-// import { decryptJWE } from "@/lib/auth/jwt";
-// import { cookies } from "next/headers";
+import { decryptJWE } from "@/lib/auth/jwt";
+import { cookies } from "next/headers";
 import Link from "next/link";
 
 export default async function HomePage() {
-  // const cookieStore = await cookies();
-  // const session = cookieStore.get("session")?.value;
+  const cookieStore = await cookies();
+  const session = cookieStore.get("session")?.value;
 
-  // const profile = session ? await decryptJWE(session!) : null;
-  // const profile = null;
+  const profile = session ? await decryptJWE(session!) : null;
 
   return (
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
         <div className="flex flex-col gap-6 p-6">
-          {/* <div>{JSON.stringify(profile)}</div> */}
+          <div>{JSON.stringify(profile)}</div>
           <div className="flex gap-1">
             <Link
               className="flex px-3 py-1.5 rounded-md hover:bg-slate-400/20"
