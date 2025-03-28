@@ -12,68 +12,6 @@
     ".woff": "font/woff",
     ".woff2": "font/woff2"
   },
-  "routes": [
-    {
-      "route": "/*.wasm",
-      "methods": [
-        "GET",
-        "HEAD"
-      ],
-      "headers": {
-        "Cache-Control": "public, max-age=86400",
-        "Content-Type": "application/wasm"
-      }
-    },
-    {
-      "route": "/*.woff",
-      "methods": [
-        "GET",
-        "HEAD"
-      ],
-      "headers": {
-        "Cache-Control": "public, max-age=86400",
-        "Content-Type": "font/woff"
-      }
-    },
-    {
-      "route": "/*.woff2",
-      "methods": [
-        "GET",
-        "HEAD"
-      ],
-      "headers": {
-        "Cache-Control": "public, max-age=86400",
-        "Content-Type": "font/woff2"
-      }
-    },
-    {
-      "route": "/logout",
-      "redirect": "/api/auth/logout"
-    },
-    {
-      "route": "/login",
-      "rewrite": "/api/auth/login"
-    }
-  ],
-  "navigationFallback": {
-    "rewrite": "index.html",
-    "exclude": [
-      "*.{png,jpg,webp,gif}",
-      "*.css",
-      "*.js"
-    ]
-  },
-  "responseOverrides": {
-    "400": {
-      "rewrite": "/invalid-invitation-error.html"
-    },
-    "403": {
-      "rewrite": "/custom-forbidden-page.html"
-    },
-    "404": {
-      "rewrite": "/404.html"
-    }
-  },
   "platform": {
     "apiRuntime": "node:20"
   }
