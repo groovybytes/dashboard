@@ -13,7 +13,7 @@ import type { Cluster } from "ioredis";
 import type { Storage } from "unstorage";
 import type { RedisOptions } from "unstorage/drivers/redis";
 
-import { ChainedTokenCredential, DefaultAzureCredential } from "@azure/identity";
+import { DefaultAzureCredential } from "@azure/identity";
 import { decodeJwt } from "jose";
 import Redis from "ioredis";
 
@@ -355,9 +355,7 @@ export async function initializeStorage(
   let accessToken: AccessToken | null = null;
 
   if (useEntraIdentity) {
-    credential = new ChainedTokenCredential(
-      new DefaultAzureCredential(),
-    );
+    credential = new DefaultAzureCredential();
     accessToken = await getRedisToken(credential);
     if (!accessToken) {
       throw new Error("Could not obtain initial Azure access token.");
