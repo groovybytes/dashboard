@@ -8,6 +8,8 @@ import { decryptJWE } from "@/lib/auth/jwt";
 import { cookies } from "next/headers";
 import Link from "next/link";
 
+import process from "node:process";
+
 export default async function HomePage() {
   const cookieStore = await cookies();
   const session = cookieStore.get("session")?.value;
@@ -19,6 +21,9 @@ export default async function HomePage() {
       <AppSidebar />
       <SidebarInset>
         <div className="flex flex-col gap-6 p-6">
+          <div>{
+            JSON.stringify({ env: process.env, }, null, 2)
+          }</div>
           <div>{JSON.stringify(profile)}</div>
           <div className="flex gap-1">
             <Link
