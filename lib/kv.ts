@@ -21,12 +21,6 @@ import { createStorage } from "unstorage";
 import redisDriver from "unstorage/drivers/redis";
 import lruCacheDriver from "unstorage/drivers/lru-cache";
 
-import {
-  ClientAssertionCredential,
-  AuthenticationRequiredError,
-} from '@azure/identity';
-import { getVercelOidcToken } from '@vercel/functions/oidc';
-
 import process from "node:process";
 
 //
@@ -363,11 +357,6 @@ export async function initializeStorage(
   if (useEntraIdentity) {
     credential = new ChainedTokenCredential(
       new DefaultAzureCredential(),
-      new ClientAssertionCredential(
-        process.env.AZURE_TENANT_ID!,
-        process.env.AZURE_CLIENT_ID!,
-        getVercelOidcToken
-      ),
     );
     accessToken = await getRedisToken(credential);
     if (!accessToken) {
