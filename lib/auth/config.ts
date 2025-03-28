@@ -3,6 +3,10 @@ import { LogLevel } from "@azure/msal-node";
 import { generateRandomHex } from "./utils";
 import process from "node:process";
 
+console.log({
+  env: process.env,
+})
+
 export const AZURE_ENTRA_CLIENT_ID = process.env.AZURE_ENTRA_CLIENT_ID ?? "azure_entra_client_id";
 export const AZURE_ENTRA_CLIENT_SECRET = process.env.AZURE_ENTRA_CLIENT_SECRET ?? "azure_entra_client_secret";
 export const AZURE_ENTRA_TENANT_NAME = process.env.AZURE_ENTRA_TENANT_NAME ?? "azure_entra_tenant_name";
