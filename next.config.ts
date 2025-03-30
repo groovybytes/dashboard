@@ -1,9 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
-  basePath: "",
-
   /* config options here */
   eslint: {
     // Warning: This allows production builds to successfully complete even if
@@ -13,12 +10,12 @@ const nextConfig: NextConfig = {
 
   redirects: async () => [
     {
-      "source": "/logout",
+      "source": "/((?!.swa).*)logout",
       "destination": "/api/auth/logout",
       "permanent": false
     },
     {
-      "source": "/login",
+      "source": "/((?!.swa).*)login",
       "destination": "/api/auth/login",
       "permanent": false
     }
