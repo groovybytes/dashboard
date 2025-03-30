@@ -8,11 +8,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { MultiSelect } from "@/components/multi-select"
 
 export interface DeviceFormData {
   deviceID?: string
   deviceName: string
-  sensorType: string
+  sensorType: string[] // Changed from string to string[]
   location: string
   purpose: string
 }
@@ -28,18 +29,28 @@ interface DeviceModalProps {
 export function DeviceModal({ isOpen, onClose, onSubmit, initialData, isEditing = false }: DeviceModalProps) {
   const [formData, setFormData] = useState<DeviceFormData>({
     deviceName: "",
-    sensorType: "",
+    sensorType: [], // Changed from "" to []
     location: "",
     purpose: "",
   })
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData)
+      // Ensure sensorType is an array even if it comes as a string from legacy data
+      const sensorType = Array.isArray(initialData.sensorType)
+        ? initialData.sensorType
+        : initialData.sensorType
+          ? [initialData.sensorType]
+          : []
+
+      setFormData({
+        ...initialData,
+        sensorType,
+      })
     } else {
       setFormData({
         deviceName: "",
-        sensorType: "",
+        sensorType: [],
         location: "",
         purpose: "",
       })
@@ -79,14 +90,28 @@ export function DeviceModal({ isOpen, onClose, onSubmit, initialData, isEditing 
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="sensorType">Sensor Type</Label>
-            <Input
-              id="sensorType"
-              name="sensorType"
-              value={formData.sensorType}
-              onChange={handleChange}
-              placeholder="Enter sensor type"
+            <Label htmlFor="sensorType">Sensor Types</Label>
+            <MultiSelect
+              selected={formData.sensorType}
+              onChange={(types) => setFormData((prev) => ({ ...prev, sensorType: types }))}
+              placeholder="Select sensor types"
+              options={[
+                { value: "Infrared", label: "Infrared" },
+                { value: "Camera", label: "Camera" },
+                { value: "Weight", label: "Weight" },
+                { value: "RFID", label: "RFID" },
+                { value: "Transaction logs", label: "Transaction logs" },
+                { value: "Temperature", label: "Temperature" },
+                { value: "Humidity", label: "Humidity" },
+                { value: "Power consumption", label: "Power consumption" },
+                { value: "Motion", label: "Motion" },
+                { value: "Occupancy", label: "Occupancy" },
+                { value: "Light level", label: "Light level" },
+                { value: "Display content usage", label: "Display content usage" },
+                { value: "Interactions", label: "Interactions" },
+              ]}
             />
+            <p className="text-xs text-muted-foreground">Select multiple sensor types if applicable</p>
           </div>
 
           <div className="space-y-2">

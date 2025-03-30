@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { FileUploader } from "@/components/file-uploader2"
+import { FileUploader } from "@/components/file-uploader"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -19,11 +19,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { BlobServiceClient } from "@azure/storage-blob"
-
-// Azure Blob Storage configuration
-const AZURE_STORAGE_CONNECTION_STRING = "DefaultEndpointsProtocol=https;AccountName=groovybytesassetsstorage;AccountKey=FrNFiHf0Y8Y3y6Jj4Gcq9CED/FvVbaFoHxQdbpBbGHBEPD+2nOEzirCMVfcAy6GTdSoyNH4k/Jvw+AStdTgNuQ==;EndpointSuffix=core.windows.net"
-const CONTAINER_NAME = "your-container-name"
 
 interface Document {
   id: string
@@ -34,76 +29,97 @@ interface Document {
   url: string
 }
 
-const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING)
-const containerClient = blobServiceClient.getContainerClient(CONTAINER_NAME)
-
-// Azure Blob Storage service
+// Simulated blob storage service
 const blobStorage = {
   listDocuments: async (): Promise<Document[]> => {
-    try {
-      let blobs = []
-      for await (const blob of containerClient.listBlobsFlat()) {
-        const url = `${containerClient.url}/${blob.name}`
-        blobs.push({
-          id: blob.name,
-          name: blob.name,
-          type: blob.name.split(".").pop() || "unknown",
-          size: blob.properties.contentLength || 0,
-          uploadedAt: blob.properties.createdOn?.toISOString() || "Unknown",
-          url,
-        })
-      }
-      return blobs
-    } catch (error) {
-      console.error("Error listing blobs:", error)
-      throw error
-    }
+    console.log("Fetching documents from storage...")
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve([
+          {
+            id: "1",
+            name: "sensor_data_2023.json",
+            type: "json",
+            size: 1024 * 1024 * 2.5, // 2.5 MB
+            uploadedAt: "2023-10-15T14:30:00Z",
+            url: "#",
+          },
+          {
+            id: "2",
+            name: "device_readings_q1.csv",
+            type: "csv",
+            size: 1024 * 512, // 512 KB
+            uploadedAt: "2023-09-22T09:15:00Z",
+            url: "#",
+          },
+          {
+            id: "3",
+            name: "maintenance_schedule.xlsx",
+            type: "xlsx",
+            size: 1024 * 1024 * 1.2, // 1.2 MB
+            uploadedAt: "2023-11-05T11:45:00Z",
+            url: "#",
+          },
+          {
+            id: "4",
+            name: "system_documentation.pdf",
+            type: "pdf",
+            size: 1024 * 1024 * 3.8, // 3.8 MB
+            uploadedAt: "2023-10-10T13:25:00Z",
+            url: "#",
+          },
+          {
+            id: "5",
+            name: "historical_data_2022.csv",
+            type: "csv",
+            size: 1024 * 1024 * 5.7, // 5.7 MB
+            uploadedAt: "2023-07-12T13:10:00Z",
+            url: "#",
+          },
+          {
+            id: "6",
+            name: "device_manual.pdf",
+            type: "pdf",
+            size: 1024 * 1024 * 8.2, // 8.2 MB
+            uploadedAt: "2023-08-18T15:40:00Z",
+            url: "#",
+          },
+        ])
+      }, 800)
+    })
   },
-
   uploadDocument: async (file: File): Promise<Document> => {
-    try {
-      const blockBlobClient = containerClient.getBlockBlobClient(file.name)
-      await blockBlobClient.uploadData(await file.arrayBuffer(), {
-        blobHTTPHeaders: { blobContentType: file.type },
-      })
-      return {
-        id: file.name,
-        name: file.name,
-        type: file.name.split(".").pop() || "unknown",
-        size: file.size,
-        uploadedAt: new Date().toISOString(),
-        url: blockBlobClient.url,
-      }
-    } catch (error) {
-      console.error("Error uploading blob:", error)
-      throw error
-    }
+    console.log("Uploading document:", file.name)
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          id: Math.random().toString(36).substr(2, 9),
+          name: file.name,
+          type: file.name.split(".").pop() || "",
+          size: file.size,
+          uploadedAt: new Date().toISOString(),
+          url: "#",
+        })
+      }, 1500)
+    })
   },
-
   deleteDocument: async (documentId: string): Promise<void> => {
-    try {
-      const blockBlobClient = containerClient.getBlockBlobClient(documentId)
-      await blockBlobClient.delete()
-    } catch (error) {
-      console.error("Error deleting blob:", error)
-      throw error
-    }
+    console.log("Deleting document:", documentId)
+    return new Promise((resolve) => {
+      // Simulate API call delay
+      setTimeout(() => {
+        resolve()
+      }, 1000)
+    })
   },
-
   downloadDocument: async (document: Document): Promise<void> => {
-    try {
-      const response = await fetch(document.url)
-      const blob = await response.blob()
-      const link = globalThis?.document?.createElement("a")
-      link.href = URL.createObjectURL(blob)
-      link.download = document.name
-      globalThis?.document?.body?.appendChild(link);
-      link.click()
-      globalThis?.document?.body?.removeChild(link)
-    } catch (error) {
-      console.error("Error downloading blob:", error)
-      throw error
-    }
+    console.log("Downloading document:", document.name)
+    return new Promise((resolve) => {
+      // Simulate download delay
+      setTimeout(() => {
+        resolve()
+      }, 1000)
+    })
   },
 }
 
@@ -252,9 +268,7 @@ export default function DocumentsPage() {
             <Card>
               <CardContent className="pt-6">
                 <FileUploader onFileUpload={handleFileUpload} />
-                <p className="text-xs text-muted-foreground mt-2">
-                  Supported file types: JSON, XLSX, CSV, PDF
-                </p>
+                <p className="text-xs text-muted-foreground mt-2">Supported file types: JSON, XLSX, CSV, PDF</p>
               </CardContent>
             </Card>
           </div>
@@ -265,11 +279,7 @@ export default function DocumentsPage() {
               {documents.length > 3 && (
                 <Button variant="link" onClick={() => setShowAll(!showAll)}>
                   {showAll ? "Show Less" : "Show All"}
-                  <ChevronRight
-                    className={`ml-1 h-4 w-4 transition-transform ${
-                      showAll ? "rotate-90" : ""
-                    }`}
-                  />
+                  <ChevronRight className={`ml-1 h-4 w-4 transition-transform ${showAll ? "rotate-90" : ""}`} />
                 </Button>
               )}
             </div>
@@ -282,9 +292,7 @@ export default function DocumentsPage() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-8">
                   <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="font-medium text-lg mb-2">
-                    No documents found
-                  </h3>
+                  <h3 className="font-medium text-lg mb-2">No documents found</h3>
                   <p className="text-muted-foreground text-center max-w-md mb-4">
                     Upload JSON, XLSX, CSV, or PDF files to see them here
                   </p>
@@ -296,10 +304,7 @@ export default function DocumentsPage() {
                   <Card key={doc.id} className="overflow-hidden">
                     <CardHeader className="pb-2">
                       <div className="flex justify-between items-start">
-                        <CardTitle
-                          className="text-base font-medium truncate"
-                          title={doc.name}
-                        >
+                        <CardTitle className="text-base font-medium truncate" title={doc.name}>
                           {doc.name}
                         </CardTitle>
                       </div>
@@ -311,16 +316,12 @@ export default function DocumentsPage() {
                           <Badge variant="outline" className="mb-1">
                             {doc.type.toUpperCase()}
                           </Badge>
-                          <p className="text-sm text-muted-foreground">
-                            {formatFileSize(doc.size)}
-                          </p>
+                          <p className="text-sm text-muted-foreground">{formatFileSize(doc.size)}</p>
                         </div>
                       </div>
                     </CardContent>
                     <CardFooter className="flex justify-between pt-2">
-                      <span className="text-xs text-muted-foreground">
-                        {formatDate(doc.uploadedAt)}
-                      </span>
+                      <span className="text-xs text-muted-foreground">{formatDate(doc.uploadedAt)}</span>
                       <div className="flex space-x-1">
                         <Button
                           variant="ghost"
@@ -357,22 +358,16 @@ export default function DocumentsPage() {
             )}
           </div>
 
-          <AlertDialog
-            open={!!documentToDelete}
-            onOpenChange={(open) => !open && setDocumentToDelete(null)}
-          >
+          <AlertDialog open={!!documentToDelete} onOpenChange={(open) => !open && setDocumentToDelete(null)}>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete Document</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to delete &quot;{documentToDelete?.name}
-                  &quot;? This action cannot be undone.
+                  Are you sure you want to delete "{documentToDelete?.name}"? This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel disabled={isDeleting}>
-                  Cancel
-                </AlertDialogCancel>
+                <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDeleteDocument}
                   disabled={isDeleting}
@@ -386,6 +381,6 @@ export default function DocumentsPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  );
+  )
 }
 

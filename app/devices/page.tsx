@@ -24,7 +24,7 @@ interface Device {
   id: string
   deviceID: string
   deviceName: string
-  sensorType: string
+  sensorType: string[]
   location: string
   purpose: string
   connectionString?: string
@@ -49,7 +49,13 @@ export default function DevicesPage() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/devices/fetch`)
       const data = await res.json()
-      setDevices(data)
+      // Ensure sensorType is always an array
+      const formattedData = data.map((device: any) => ({
+        ...device,
+        sensorType: Array.isArray(device.sensorType) ? device.sensorType : device.sensorType ? [device.sensorType] : [],
+      }))
+
+      setDevices(formattedData)
     } catch (error) {
       console.error("Error fetching devices:", error)
       toast({ title: "Error", description: "Failed to fetch devices.", variant: "destructive" })
@@ -154,7 +160,7 @@ export default function DevicesPage() {
                 <TableRow>
                   <TableHead>Device Name</TableHead>
                   <TableHead>Device ID</TableHead>
-                  <TableHead>Sensor Type</TableHead>
+                  <TableHead>Sensor Types</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Purpose</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -171,7 +177,19 @@ export default function DevicesPage() {
                         {device.deviceID}
                       </Badge>
                     </TableCell>
-                    <TableCell>{device.sensorType}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {device.sensorType.length > 0 ? (
+                          device.sensorType.map((type) => (
+                            <Badge key={type} variant="secondary" className="text-xs">
+                              {type}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-muted-foreground text-xs">None specified</span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>{device.location}</TableCell>
                     <TableCell className="max-w-[200px] truncate">
                       {device.purpose}
