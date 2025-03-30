@@ -10,12 +10,12 @@ const nextConfig: NextConfig = {
 
   redirects: async () => [
     {
-      "source": "/logout",
+      "source": "/((?!.swa).*)/logout",
       "destination": "/api/auth/logout",
       "permanent": false
     },
     {
-      "source": "/login",
+      "source": "/((?!.swa).*)/login",
       "destination": "/api/auth/login",
       "permanent": false
     }
