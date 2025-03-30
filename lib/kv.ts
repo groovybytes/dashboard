@@ -355,15 +355,26 @@ export async function initializeStorage(
   let accessToken: AccessToken | null = null;
 
   if (useEntraIdentity) {
-    credential = new DefaultAzureCredential();
-    accessToken = await getRedisToken(credential);
-    if (!accessToken) {
-      throw new Error("Could not obtain initial Azure access token.");
+    try {
+      // Try to obtain an Azure access token via managed identity
+      credential = new DefaultAzureCredential();
+      accessToken = await getRedisToken(credential);
+      if (!accessToken) {
+        throw new Error("Could not obtain initial Azure access token.");
+      }
+    } catch (error) {
+      console.error("Azure managed identity login failed, falling back to in-memory storage:", error);
+      // Fallback: remove the host so that the in-memory unstorage driver is used
+      if (redisConfig) {
+        redisConfig.host = undefined;
+      } else {
+        redisConfig = { host: undefined };
+      }
     }
   }
 
   const driverOptions = getDriverOptions(
-    redisConfig as RedisOptions || {},
+    (redisConfig as RedisOptions) || {},
     accessToken || undefined,
     useEntraIdentity,
     useCluster,
@@ -371,13 +382,13 @@ export async function initializeStorage(
 
   const _host = redisConfig?.host ?? process.env.REDIS_HOST; 
 
-  // Create the Redis driver using the unstorage Redis driver.
+  // Create the driver: use Redis driver if a host is provided; otherwise, fallback to in-memory driver.
   const driver = _host ? redisDriver(driverOptions) : lruCacheDriver({});
 
   // Create the unstorage storage instance.
   const storage = createStorage({ driver });
 
-  // If using Managed Identity, attach token refresh logic.
+  // If using Managed Identity and a host is provided, attach token refresh logic.
   if (useEntraIdentity && credential && _host) {
     const redisClient = driver.getInstance!() as Redis | Cluster;
     const refreshInterval = redisConfig?.tokenRefreshIntervalMs || (
