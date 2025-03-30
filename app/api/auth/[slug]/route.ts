@@ -20,7 +20,7 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  const referer = req.headers.get("referer")!;
+  const referer = req?.headers?.get("referer")!;
   console.log({
     referer
   })

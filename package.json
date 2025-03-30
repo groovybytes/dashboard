@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "start": "node --require ./vendor/appinsights.cjs node_modules/next/dist/bin/next start -p $PORT",
     "build": "next build",
-    "start": "next start",
     "lint": "next lint"
   },
   "engines": {
@@ -49,6 +49,7 @@
     "@types/node": "^22.13.13",
     "@types/react": "^19.0.12",
     "@types/react-dom": "^19.0.4",
+    "applicationinsights": "^3.6.0",
     "eslint": "^9.23.0",
     "eslint-config-next": "15.2.4",
     "postcss": "^8.5.3",
