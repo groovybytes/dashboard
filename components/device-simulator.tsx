@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
 import { Play, Pause, RefreshCw, Zap, Thermometer, Users, ShoppingCart } from "lucide-react"
 
+// Define types for device data
 interface DeviceData {
   deviceId: string
   timestamp: string
@@ -26,7 +27,14 @@ interface Device {
   lastReading: DeviceData | null
 }
 
+/**
+ * DeviceSimulator Component
+ *
+ * Simulates IoT devices sending data to the GroovyBytes platform.
+ * Allows users to start/stop simulation and view device details.
+ */
 export function DeviceSimulator() {
+  // Sample devices for simulation
   const [devices, setDevices] = useState<Device[]>([
     {
       deviceId: "foot_traffic_counter_001",

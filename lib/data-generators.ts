@@ -43,7 +43,13 @@ export async function generateFootTrafficData() {
   }
 }
 
-// Generate energy consumption data
+/**
+ * Generates energy consumption data for different device types
+ * - Simulates energy usage distribution across major store systems
+ * - Provides data for donut chart visualization
+ *
+ * @returns {Promise<Object>} Object containing energy consumption by device type
+ */
 export async function generateEnergyConsumptionData() {
   // Simulate API call delay
   await new Promise((resolve) => setTimeout(resolve, 600))
@@ -61,7 +67,13 @@ export async function generateEnergyConsumptionData() {
   }
 }
 
-// Generate sales data
+/**
+ * Generates sales data by product category
+ * - Creates realistic sales distribution across store departments
+ * - Provides data for bar chart visualization
+ *
+ * @returns {Promise<Object>} Object containing sales by category
+ */
 export async function generateSalesData() {
   // Simulate API call delay
   await new Promise((resolve) => setTimeout(resolve, 700))
@@ -81,7 +93,14 @@ export async function generateSalesData() {
   }
 }
 
-// Generate inventory data
+/**
+ * Generates inventory data by department
+ * - Shows current inventory levels compared to optimal levels
+ * - Highlights departments that need restocking
+ * - Provides data for bar chart visualization
+ *
+ * @returns {Promise<Object>} Object containing inventory levels by department
+ */
 export async function generateInventoryData() {
   // Simulate API call delay
   await new Promise((resolve) => setTimeout(resolve, 800))
@@ -101,7 +120,14 @@ export async function generateInventoryData() {
   }
 }
 
-// Generate pattern insights
+/**
+ * Generates pattern insights, anomalies, and optimization opportunities
+ * - Identifies unusual patterns requiring attention
+ * - Detects recurring patterns in store data
+ * - Suggests cost optimization opportunities
+ *
+ * @returns {Promise<Object>} Object containing anomalies, patterns, and cost optimizations
+ */
 export async function generatePatternInsights() {
   // Simulate API call delay
   await new Promise((resolve) => setTimeout(resolve, 900))
@@ -176,7 +202,14 @@ export async function generatePatternInsights() {
   }
 }
 
-// Generate relationship data
+/**
+ * Generates relationship data between different data sources
+ * - Identifies correlations between different metrics
+ * - Provides customer behavior insights
+ * - Shows inventory-sales relationship over time
+ *
+ * @returns {Promise<Object>} Object containing connections, customer behavior, and inventory-sales relationship
+ */
 export async function generateRelationshipData() {
   // Simulate API call delay
   await new Promise((resolve) => setTimeout(resolve, 1000))

@@ -1,365 +1,596 @@
 "use client"
 
-import * as React from "react"
-import * as RechartsPrimitive from "recharts"
+import type * as React from "react"
+import { AxisBottom, AxisLeft } from "@visx/axis"
+import { Grid } from "@visx/grid"
+import { Group } from "@visx/group"
+import { scaleBand, scaleLinear, scaleOrdinal } from "@visx/scale"
+import { Bar } from "@visx/shape"
+import { Text } from "@visx/text"
+import { Pie } from "@visx/shape"
+import { GradientTealBlue } from "@visx/gradient"
+import { curveCardinal } from "@visx/curve"
+import { LinePath } from "@visx/shape"
+import { ParentSize } from "@visx/responsive"
+import { useTooltip, useTooltipInPortal, defaultStyles } from "@visx/tooltip"
+import { localPoint } from "@visx/event"
+import { LegendOrdinal } from "@visx/legend"
 
-import { cn } from "@/lib/utils"
-
-// Format: { THEME_NAME: CSS_SELECTOR }
-const THEMES = { light: "", dark: ".dark" } as const
-
-export type ChartConfig = {
-  [k in string]: {
-    label?: React.ReactNode
-    icon?: React.ComponentType
-  } & (
-    | { color?: string; theme?: never }
-    | { color?: never; theme: Record<keyof typeof THEMES, string> }
-  )
+// Define chart props
+interface ChartProps {
+  data: any[]
+  index: string
+  categories: string[]
+  colors?: string[]
+  valueFormatter?: (value: number) => string
+  yAxisWidth?: number
+  className?: string
 }
 
-type ChartContextProps = {
-  config: ChartConfig
+// Define tooltip styles
+const tooltipStyles = {
+  ...defaultStyles,
+  backgroundColor: "rgba(0, 0, 0, 0.8)",
+  color: "white",
+  border: "1px solid white",
+  borderRadius: "4px",
+  fontSize: "12px",
+  padding: "8px",
 }
 
-const ChartContext = React.createContext<ChartContextProps | null>(null)
+// Color map for charts
+const defaultColors = ["#2563eb", "#16a34a", "#9333ea", "#f59e0b", "#ef4444"]
 
-function useChart() {
-  const context = React.useContext(ChartContext)
-
-  if (!context) {
-    throw new Error("useChart must be used within a <ChartContainer />")
+// Helper function to get color from name
+const getColorFromName = (name: string) => {
+  switch (name.toLowerCase()) {
+    case "blue":
+      return "#2563eb"
+    case "green":
+      return "#16a34a"
+    case "purple":
+      return "#9333ea"
+    case "orange":
+      return "#f59e0b"
+    case "red":
+      return "#ef4444"
+    case "cyan":
+      return "#06b6d4"
+    case "indigo":
+      return "#4f46e5"
+    case "violet":
+      return "#8b5cf6"
+    case "gray":
+      return "#6b7280"
+    default:
+      return "#2563eb"
   }
-
-  return context
 }
 
-const ChartContainer = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<"div"> & {
-    config: ChartConfig
-    children: React.ComponentProps<
-      typeof RechartsPrimitive.ResponsiveContainer
-    >["children"]
-  }
->(({ id, className, children, config, ...props }, ref) => {
-  const uniqueId = React.useId()
-  const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`
+// Line Chart Component
+export function LineChart({
+  data,
+  index,
+  categories,
+  colors = defaultColors,
+  valueFormatter = (value) => `${value}`,
+  yAxisWidth = 50,
+  className,
+}: ChartProps) {
+  const colorMap = colors.map((color, i) => getColorFromName(color))
 
-  return (
-    <ChartContext.Provider value={{ config }}>
-      <div
-        data-chart={chartId}
-        ref={ref}
-        className={cn(
-          "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-none [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-sector]:outline-none [&_.recharts-surface]:outline-none",
-          className
-        )}
-        {...props}
-      >
-        <ChartStyle id={chartId} config={config} />
-        <RechartsPrimitive.ResponsiveContainer>
-          {children}
-        </RechartsPrimitive.ResponsiveContainer>
-      </div>
-    </ChartContext.Provider>
-  )
-})
-ChartContainer.displayName = "Chart"
+  // Tooltip setup - Moved to the top level
+  const { tooltipData, tooltipLeft, tooltipTop, tooltipOpen, showTooltip, hideTooltip } = useTooltip()
 
-const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
-  const colorConfig = Object.entries(config).filter(
-    ([, config]) => config.theme || config.color
-  )
-
-  if (!colorConfig.length) {
-    return null
-  }
-
-  return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color =
-      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
-      itemConfig.color
-    return color ? `  --color-${key}: ${color};` : null
+  const { containerRef, TooltipInPortal } = useTooltipInPortal({
+    scroll: true,
   })
-  .join("\n")}
-}
-`
-          )
-          .join("\n"),
-      }}
-    />
-  )
-}
 
-const ChartTooltip = RechartsPrimitive.Tooltip
+  return (
+    <div className={className}>
+      <ParentSize>
+        {({ width, height }) => {
+          // Chart dimensions
+          const margin = { top: 20, right: 20, bottom: 40, left: yAxisWidth }
+          const innerWidth = width - margin.left - margin.right
+          const innerHeight = height - margin.top - margin.bottom
 
-const ChartTooltipContent = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
-    React.ComponentProps<"div"> & {
-      hideLabel?: boolean
-      hideIndicator?: boolean
-      indicator?: "line" | "dot" | "dashed"
-      nameKey?: string
-      labelKey?: string
-    }
->(
-  (
-    {
-      active,
-      payload,
-      className,
-      indicator = "dot",
-      hideLabel = false,
-      hideIndicator = false,
-      label,
-      labelFormatter,
-      labelClassName,
-      formatter,
-      color,
-      nameKey,
-      labelKey,
-    },
-    ref
-  ) => {
-    const { config } = useChart()
+          // Scales
+          const xScale = scaleBand({
+            domain: data.map((d) => d[index]),
+            range: [0, innerWidth],
+            padding: 0.3,
+          })
 
-    const tooltipLabel = React.useMemo(() => {
-      if (hideLabel || !payload?.length) {
-        return null
-      }
+          const allValues = categories.flatMap((category) => data.map((d) => Number(d[category] || 0)))
 
-      const [item] = payload
-      const key = `${labelKey || item?.dataKey || item?.name || "value"}`
-      const itemConfig = getPayloadConfigFromPayload(config, item, key)
-      const value =
-        !labelKey && typeof label === "string"
-          ? config[label as keyof typeof config]?.label || label
-          : itemConfig?.label
+          const yScale = scaleLinear({
+            domain: [0, Math.max(...allValues) * 1.1],
+            range: [innerHeight, 0],
+            nice: true,
+          })
 
-      if (labelFormatter) {
-        return (
-          <div className={cn("font-medium", labelClassName)}>
-            {labelFormatter(value, payload)}
-          </div>
-        )
-      }
+          const colorScale = scaleOrdinal({
+            domain: categories,
+            range: colorMap,
+          })
 
-      if (!value) {
-        return null
-      }
-
-      return <div className={cn("font-medium", labelClassName)}>{value}</div>
-    }, [
-      label,
-      labelFormatter,
-      payload,
-      hideLabel,
-      labelClassName,
-      config,
-      labelKey,
-    ])
-
-    if (!active || !payload?.length) {
-      return null
-    }
-
-    const nestLabel = payload.length === 1 && indicator !== "dot"
-
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          "grid min-w-[8rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl",
-          className
-        )}
-      >
-        {!nestLabel ? tooltipLabel : null}
-        <div className="grid gap-1.5">
-          {payload.map((item, index) => {
-            const key = `${nameKey || item.name || item.dataKey || "value"}`
-            const itemConfig = getPayloadConfigFromPayload(config, item, key)
-            const indicatorColor = color || item.payload.fill || item.color
-
-            return (
-              <div
-                key={item.dataKey}
-                className={cn(
-                  "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-muted-foreground",
-                  indicator === "dot" && "items-center"
-                )}
-              >
-                {formatter && item?.value !== undefined && item.name ? (
-                  formatter(item.value, item.name, item, index, item.payload)
-                ) : (
-                  <>
-                    {itemConfig?.icon ? (
-                      <itemConfig.icon />
-                    ) : (
-                      !hideIndicator && (
-                        <div
-                          className={cn(
-                            "shrink-0 rounded-[2px] border-[--color-border] bg-[--color-bg]",
-                            {
-                              "h-2.5 w-2.5": indicator === "dot",
-                              "w-1": indicator === "line",
-                              "w-0 border-[1.5px] border-dashed bg-transparent":
-                                indicator === "dashed",
-                              "my-0.5": nestLabel && indicator === "dashed",
-                            }
-                          )}
-                          style={
-                            {
-                              "--color-bg": indicatorColor,
-                              "--color-border": indicatorColor,
-                            } as React.CSSProperties
-                          }
-                        />
-                      )
-                    )}
-                    <div
-                      className={cn(
-                        "flex flex-1 justify-between leading-none",
-                        nestLabel ? "items-end" : "items-center"
-                      )}
-                    >
-                      <div className="grid gap-1.5">
-                        {nestLabel ? tooltipLabel : null}
-                        <span className="text-muted-foreground">
-                          {itemConfig?.label || item.name}
-                        </span>
-                      </div>
-                      {item.value && (
-                        <span className="font-mono font-medium tabular-nums text-foreground">
-                          {item.value.toLocaleString()}
-                        </span>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    )
-  }
-)
-ChartTooltipContent.displayName = "ChartTooltip"
-
-const ChartLegend = RechartsPrimitive.Legend
-
-const ChartLegendContent = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<"div"> &
-    Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
-      hideIcon?: boolean
-      nameKey?: string
-    }
->(
-  (
-    { className, hideIcon = false, payload, verticalAlign = "bottom", nameKey },
-    ref
-  ) => {
-    const { config } = useChart()
-
-    if (!payload?.length) {
-      return null
-    }
-
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          "flex items-center justify-center gap-4",
-          verticalAlign === "top" ? "pb-3" : "pt-3",
-          className
-        )}
-      >
-        {payload.map((item) => {
-          const key = `${nameKey || item.dataKey || "value"}`
-          const itemConfig = getPayloadConfigFromPayload(config, item, key)
+          const handleMouseOver = (event: React.MouseEvent, datum: any, category: string) => {
+            const coords = localPoint(event)
+            showTooltip({
+              tooltipData: { datum, category },
+              tooltipLeft: coords?.x,
+              tooltipTop: coords?.y,
+            })
+          }
 
           return (
-            <div
-              key={item.value}
-              className={cn(
-                "flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground"
+            <div ref={containerRef} style={{ position: "relative" }}>
+              <svg width={width} height={height}>
+                <GradientTealBlue id="line-gradient" />
+
+                <Group left={margin.left} top={margin.top}>
+                  <Grid
+                    width={innerWidth}
+                    height={innerHeight}
+                    xScale={xScale}
+                    yScale={yScale}
+                    stroke="#e0e0e0"
+                    strokeOpacity={0.2}
+                    columnTickValues={data.map((d) => d[index])}
+                  />
+
+                  <AxisLeft
+                    scale={yScale}
+                    tickFormat={valueFormatter}
+                    stroke="#888888"
+                    tickStroke="#888888"
+                    tickLabelProps={() => ({
+                      fill: "#888888",
+                      fontSize: 10,
+                      textAnchor: "end",
+                      dy: "0.33em",
+                    })}
+                  />
+
+                  <AxisBottom
+                    top={innerHeight}
+                    scale={xScale}
+                    stroke="#888888"
+                    tickStroke="#888888"
+                    tickLabelProps={() => ({
+                      fill: "#888888",
+                      fontSize: 10,
+                      textAnchor: "middle",
+                      dy: "0.33em",
+                    })}
+                  />
+
+                  {categories.map((category, i) => (
+                    <LinePath
+                      key={`line-${category}`}
+                      data={data}
+                      x={(d) => (xScale(d[index]) || 0) + xScale.bandwidth() / 2}
+                      y={(d) => yScale(d[category] || 0)}
+                      stroke={colorScale(category)}
+                      strokeWidth={2}
+                      curve={curveCardinal}
+                      onMouseMove={(event) => handleMouseOver(event, data, category)}
+                      onMouseLeave={hideTooltip}
+                    />
+                  ))}
+                </Group>
+              </svg>
+
+              {/* Legend */}
+              <div style={{ position: "absolute", top: 0, right: 0 }}>
+                <LegendOrdinal scale={colorScale} direction="row" labelMargin="0 15px 0 0" shape="line" />
+              </div>
+
+              {tooltipOpen && tooltipData && (
+                <TooltipInPortal key={Math.random()} top={tooltipTop} left={tooltipLeft} style={tooltipStyles}>
+                  <div>
+                    <strong>{tooltipData.category}</strong>
+                    <div>{valueFormatter(tooltipData.datum[tooltipData.category])}</div>
+                  </div>
+                </TooltipInPortal>
               )}
-            >
-              {itemConfig?.icon && !hideIcon ? (
-                <itemConfig.icon />
-              ) : (
-                <div
-                  className="h-2 w-2 shrink-0 rounded-[2px]"
-                  style={{
-                    backgroundColor: item.color,
-                  }}
-                />
-              )}
-              {itemConfig?.label}
             </div>
           )
-        })}
-      </div>
-    )
-  }
-)
-ChartLegendContent.displayName = "ChartLegend"
-
-// Helper to extract item config from a payload.
-function getPayloadConfigFromPayload(
-  config: ChartConfig,
-  payload: unknown,
-  key: string
-) {
-  if (typeof payload !== "object" || payload === null) {
-    return undefined
-  }
-
-  const payloadPayload =
-    "payload" in payload &&
-    typeof payload.payload === "object" &&
-    payload.payload !== null
-      ? payload.payload
-      : undefined
-
-  let configLabelKey: string = key
-
-  if (
-    key in payload &&
-    typeof payload[key as keyof typeof payload] === "string"
-  ) {
-    configLabelKey = payload[key as keyof typeof payload] as string
-  } else if (
-    payloadPayload &&
-    key in payloadPayload &&
-    typeof payloadPayload[key as keyof typeof payloadPayload] === "string"
-  ) {
-    configLabelKey = payloadPayload[
-      key as keyof typeof payloadPayload
-    ] as string
-  }
-
-  return configLabelKey in config
-    ? config[configLabelKey]
-    : config[key as keyof typeof config]
+        }}
+      </ParentSize>
+    </div>
+  )
 }
 
-export {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
-  ChartStyle,
+// Bar Chart Component
+export function BarChart({
+  data,
+  index,
+  categories,
+  colors = defaultColors,
+  valueFormatter = (value) => `${value}`,
+  yAxisWidth = 50,
+  className,
+}: ChartProps) {
+  const colorMap = colors.map((color, i) => getColorFromName(color))
+
+  // Tooltip setup - Moved to the top level
+  const { tooltipData, tooltipLeft, tooltipTop, tooltipOpen, showTooltip, hideTooltip } = useTooltip()
+
+  const { containerRef, TooltipInPortal } = useTooltipInPortal({
+    scroll: true,
+  })
+
+  return (
+    <div className={className}>
+      <ParentSize>
+        {({ width, height }) => {
+          // Chart dimensions
+          const margin = { top: 20, right: 20, bottom: 40, left: yAxisWidth }
+          const innerWidth = width - margin.left - margin.right
+          const innerHeight = height - margin.top - margin.bottom
+
+          // Scales
+          const xScale = scaleBand({
+            domain: data.map((d) => d[index]),
+            range: [0, innerWidth],
+            padding: 0.3,
+          })
+
+          const allValues = categories.flatMap((category) => data.map((d) => Number(d[category] || 0)))
+
+          const yScale = scaleLinear({
+            domain: [0, Math.max(...allValues) * 1.1],
+            range: [innerHeight, 0],
+            nice: true,
+          })
+
+          const colorScale = scaleOrdinal({
+            domain: categories,
+            range: colorMap,
+          })
+
+          const handleMouseOver = (event: React.MouseEvent, datum: any, category: string) => {
+            const coords = localPoint(event)
+            showTooltip({
+              tooltipData: { datum, category },
+              tooltipLeft: coords?.x,
+              tooltipTop: coords?.y,
+            })
+          }
+
+          return (
+            <div ref={containerRef} style={{ position: "relative" }}>
+              <svg width={width} height={height}>
+                <Group left={margin.left} top={margin.top}>
+                  <Grid
+                    width={innerWidth}
+                    height={innerHeight}
+                    xScale={xScale}
+                    yScale={yScale}
+                    stroke="#e0e0e0"
+                    strokeOpacity={0.2}
+                  />
+
+                  <AxisLeft
+                    scale={yScale}
+                    tickFormat={valueFormatter}
+                    stroke="#888888"
+                    tickStroke="#888888"
+                    tickLabelProps={() => ({
+                      fill: "#888888",
+                      fontSize: 10,
+                      textAnchor: "end",
+                      dy: "0.33em",
+                    })}
+                  />
+
+                  <AxisBottom
+                    top={innerHeight}
+                    scale={xScale}
+                    stroke="#888888"
+                    tickStroke="#888888"
+                    tickLabelProps={() => ({
+                      fill: "#888888",
+                      fontSize: 10,
+                      textAnchor: "middle",
+                      dy: "0.33em",
+                    })}
+                  />
+
+                  {data.map((d, i) => {
+                    const category = categories[0]
+                    const barWidth = xScale.bandwidth() / categories.length
+
+                    return categories.map((category, j) => {
+                      const barHeight = innerHeight - yScale(d[category] || 0)
+                      const barX = (xScale(d[index]) || 0) + j * barWidth
+                      const barY = innerHeight - barHeight
+
+                      return (
+                        <Bar
+                          key={`bar-${i}-${j}`}
+                          x={barX}
+                          y={barY}
+                          width={barWidth}
+                          height={barHeight}
+                          fill={colorScale(category)}
+                          onMouseMove={(event) => handleMouseOver(event, d, category)}
+                          onMouseLeave={hideTooltip}
+                        />
+                      )
+                    })
+                  })}
+                </Group>
+              </svg>
+
+              {/* Legend */}
+              <div style={{ position: "absolute", top: 0, right: 0 }}>
+                <LegendOrdinal scale={colorScale} direction="row" labelMargin="0 15px 0 0" />
+              </div>
+
+              {tooltipOpen && tooltipData && (
+                <TooltipInPortal key={Math.random()} top={tooltipTop} left={tooltipLeft} style={tooltipStyles}>
+                  <div>
+                    <strong>{tooltipData.datum[index]}</strong>
+                    <div>
+                      {tooltipData.category}: {valueFormatter(tooltipData.datum[tooltipData.category])}
+                    </div>
+                  </div>
+                </TooltipInPortal>
+              )}
+            </div>
+          )
+        }}
+      </ParentSize>
+    </div>
+  )
 }
+
+// Pie Chart Component
+export function PieChart({
+  data,
+  category,
+  index,
+  colors = defaultColors,
+  valueFormatter = (value) => `${value}`,
+  className,
+}: ChartProps) {
+  const colorMap = colors.map((color, i) => getColorFromName(color))
+
+  // Tooltip setup - Moved to the top level
+  const { tooltipData, tooltipLeft, tooltipTop, tooltipOpen, showTooltip, hideTooltip } = useTooltip()
+
+  const { containerRef, TooltipInPortal } = useTooltipInPortal({
+    scroll: true,
+  })
+
+  return (
+    <div className={className}>
+      <ParentSize>
+        {({ width, height }) => {
+          // Chart dimensions
+          const margin = { top: 20, right: 20, bottom: 20, left: 20 }
+          const innerWidth = width - margin.left - margin.right
+          const innerHeight = height - margin.top - margin.bottom
+          const radius = Math.min(innerWidth, innerHeight) / 2
+
+          // Scales
+          const colorScale = scaleOrdinal({
+            domain: data.map((d) => d[index]),
+            range: colorMap,
+          })
+
+          const handleMouseOver = (event: React.MouseEvent, datum: any) => {
+            const coords = localPoint(event)
+            showTooltip({
+              tooltipData: datum,
+              tooltipLeft: coords?.x,
+              tooltipTop: coords?.y,
+            })
+          }
+
+          // Calculate total for percentage
+          const total = data.reduce((acc, d) => acc + d[category], 0)
+
+          return (
+            <div ref={containerRef} style={{ position: "relative" }}>
+              <svg width={width} height={height}>
+                <Group top={height / 2} left={width / 2}>
+                  <Pie data={data} pieValue={(d) => d[category]} outerRadius={radius} innerRadius={0} padAngle={0.01}>
+                    {(pie) => {
+                      return pie.arcs.map((arc, i) => {
+                        const [centroidX, centroidY] = pie.path.centroid(arc)
+                        const datum = arc.data
+                        const percentage = (datum[category] / total) * 100
+
+                        return (
+                          <g key={`arc-${i}`}>
+                            <path
+                              d={pie.path(arc) || ""}
+                              fill={colorScale(datum[index])}
+                              onMouseMove={(event) => handleMouseOver(event, datum)}
+                              onMouseLeave={hideTooltip}
+                            />
+                            {percentage > 5 && (
+                              <Text
+                                x={centroidX}
+                                y={centroidY}
+                                textAnchor="middle"
+                                verticalAnchor="middle"
+                                fill="white"
+                                fontSize={12}
+                              >
+                                {`${percentage.toFixed(0)}%`}
+                              </Text>
+                            )}
+                          </g>
+                        )
+                      })
+                    }}
+                  </Pie>
+                </Group>
+              </svg>
+
+              {/* Legend */}
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <LegendOrdinal scale={colorScale} direction="row" labelMargin="0 15px 0 0" />
+              </div>
+
+              {tooltipOpen && tooltipData && (
+                <TooltipInPortal key={Math.random()} top={tooltipTop} left={tooltipLeft} style={tooltipStyles}>
+                  <div>
+                    <strong>{tooltipData[index]}</strong>
+                    <div>
+                      {valueFormatter(tooltipData[category])} ({((tooltipData[category] / total) * 100).toFixed(1)}%)
+                    </div>
+                  </div>
+                </TooltipInPortal>
+              )}
+            </div>
+          )
+        }}
+      </ParentSize>
+    </div>
+  )
+}
+
+// Donut Chart Component
+export function DonutChart({
+  data,
+  category,
+  index,
+  colors = defaultColors,
+  valueFormatter = (value) => `${value}`,
+  className,
+}: ChartProps) {
+  const colorMap = colors.map((color, i) => getColorFromName(color))
+
+  // Tooltip setup - Moved to the top level
+  const { tooltipData, tooltipLeft, tooltipTop, tooltipOpen, showTooltip, hideTooltip } = useTooltip()
+
+  const { containerRef, TooltipInPortal } = useTooltipInPortal({
+    scroll: true,
+  })
+
+  return (
+    <div className={className}>
+      <ParentSize>
+        {({ width, height }) => {
+          // Chart dimensions
+          const margin = { top: 20, right: 20, bottom: 20, left: 20 }
+          const innerWidth = width - margin.left - margin.right
+          const innerHeight = height - margin.top - margin.bottom
+          const radius = Math.min(innerWidth, innerHeight) / 2
+          const innerRadius = radius * 0.6
+
+          // Scales
+          const colorScale = scaleOrdinal({
+            domain: data.map((d) => d[index]),
+            range: colorMap,
+          })
+
+          const handleMouseOver = (event: React.MouseEvent, datum: any) => {
+            const coords = localPoint(event)
+            showTooltip({
+              tooltipData: datum,
+              tooltipLeft: coords?.x,
+              tooltipTop: coords?.y,
+            })
+          }
+
+          // Calculate total for percentage
+          const total = data.reduce((acc, d) => acc + d[category], 0)
+
+          return (
+            <div ref={containerRef} style={{ position: "relative" }}>
+              <svg width={width} height={height}>
+                <Group top={height / 2} left={width / 2}>
+                  <Pie
+                    data={data}
+                    pieValue={(d) => d[category]}
+                    outerRadius={radius}
+                    innerRadius={innerRadius}
+                    padAngle={0.02}
+                  >
+                    {(pie) => {
+                      return pie.arcs.map((arc, i) => {
+                        const [centroidX, centroidY] = pie.path.centroid(arc)
+                        const datum = arc.data
+                        const percentage = (datum[category] / total) * 100
+
+                        return (
+                          <g key={`arc-${i}`}>
+                            <path
+                              d={pie.path(arc) || ""}
+                              fill={colorScale(datum[index])}
+                              onMouseMove={(event) => handleMouseOver(event, datum)}
+                              onMouseLeave={hideTooltip}
+                            />
+                            {percentage > 5 && (
+                              <Text
+                                x={centroidX}
+                                y={centroidY}
+                                textAnchor="middle"
+                                verticalAnchor="middle"
+                                fill="white"
+                                fontSize={12}
+                              >
+                                {`${percentage.toFixed(0)}%`}
+                              </Text>
+                            )}
+                          </g>
+                        )
+                      })
+                    }}
+                  </Pie>
+
+                  {/* Center text with total */}
+                  <Text textAnchor="middle" verticalAnchor="middle" fontSize={16} fontWeight="bold">
+                    {valueFormatter(total)}
+                  </Text>
+                </Group>
+              </svg>
+
+              {/* Legend */}
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <LegendOrdinal scale={colorScale} direction="row" labelMargin="0 15px 0 0" />
+              </div>
+
+              {tooltipOpen && tooltipData && (
+                <TooltipInPortal key={Math.random()} top={tooltipTop} left={tooltipLeft} style={tooltipStyles}>
+                  <div>
+                    <strong>{tooltipData[index]}</strong>
+                    <div>
+                      {valueFormatter(tooltipData[category])} ({((tooltipData[category] / total) * 100).toFixed(1)}%)
+                    </div>
+                  </div>
+                </TooltipInPortal>
+              )}
+            </div>
+          )
+        }}
+      </ParentSize>
+    </div>
+  )
+}
+
