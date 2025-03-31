@@ -83,15 +83,6 @@ export function DashboardClient({ profile }: DashboardClientProps) {
         <AppSidebar />
         <SidebarInset>
           <div className="flex items-center justify-center h-[600px]">
-            <div>{JSON.stringify(profile)}</div>
-            <div className="flex gap-1">
-              <Link className="flex px-3 py-1.5 rounded-md hover:bg-slate-400/20" href="/login">
-                Login
-              </Link>
-              <Link className="flex px-3 py-1.5 rounded-md hover:bg-slate-400/20" href="/logout">
-                Logout
-              </Link>
-            </div>
             <div className="text-center">
               <h2 className="text-2xl font-semibold mb-2">Loading Dashboard Data...</h2>
               <p className="text-muted-foreground">Analyzing retail store data and generating insights...</p>
