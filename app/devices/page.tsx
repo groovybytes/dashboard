@@ -24,13 +24,13 @@ interface Device {
   id: string
   deviceID: string
   deviceName: string
-  sensorType: string[]
+  sensorType: string[] // Changed from string to string[]
   location: string
   purpose: string
   connectionString?: string
 }
 
-const API_BASE_URL = "https://groovybytes-platform-management.azurewebsites.net"
+const API_BASE_URL = "http://127.0.0.1:5000"
 
 export default function DevicesPage() {
   const [devices, setDevices] = useState<Device[]>([])
@@ -47,8 +47,9 @@ export default function DevicesPage() {
   const fetchDevices = async () => {
     setIsLoading(true)
     try {
-      const res = await fetch(`${API_BASE_URL}/api/devices/fetch`)
+      const res = await fetch(`${API_BASE_URL}/get-devices`)
       const data = await res.json()
+
       // Ensure sensorType is always an array
       const formattedData = data.map((device: any) => ({
         ...device,
@@ -68,13 +69,14 @@ export default function DevicesPage() {
     setIsLoading(true)
     try {
       const newDevice = {
+        deviceID: editingDevice?.deviceID || `device-${Date.now()}`, // Auto-generate unique deviceID
         ...deviceData,
       }
 
       const method = editingDevice ? "PUT" : "POST"
       const url = editingDevice
-        ? `${API_BASE_URL}/api/devices/update/${deviceData.deviceID}`
-        : `${API_BASE_URL}/api/devices/register`
+        ? `${API_BASE_URL}/update-device/${deviceData.deviceID}`
+        : `${API_BASE_URL}/register-device`
 
       await fetch(url, {
         method,
@@ -109,7 +111,7 @@ export default function DevicesPage() {
     try {
       console.log("Deleting device:", deviceToDelete.deviceID)
 
-      const res = await fetch(`${API_BASE_URL}/api/device/delete/${deviceToDelete.deviceID}`, {
+      const res = await fetch(`${API_BASE_URL}/delete-device/${deviceToDelete.deviceID}`, {
         method: "DELETE",
       })
 
@@ -144,15 +146,11 @@ export default function DevicesPage() {
           </div>
 
           {isLoading && devices.length === 0 ? (
-            <p className="text-center py-8 text-muted-foreground">
-              Loading devices...
-            </p>
+            <p className="text-center py-8 text-muted-foreground">Loading devices...</p>
           ) : devices.length === 0 ? (
             <div className="text-center py-8 border rounded-lg">
               <h3 className="font-medium text-lg mb-2">No devices found</h3>
-              <p className="text-muted-foreground mb-4">
-                Start by adding your first IoT device.
-              </p>
+              <p className="text-muted-foreground mb-4">Start by adding your first IoT device.</p>
             </div>
           ) : (
             <Table>
@@ -169,9 +167,7 @@ export default function DevicesPage() {
               <TableBody>
                 {devices.map((device) => (
                   <TableRow key={device.deviceID}>
-                    <TableCell className="font-medium">
-                      {device.deviceName}
-                    </TableCell>
+                    <TableCell className="font-medium">{device.deviceName}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="font-mono text-xs">
                         {device.deviceID}
@@ -191,26 +187,20 @@ export default function DevicesPage() {
                       </div>
                     </TableCell>
                     <TableCell>{device.location}</TableCell>
-                    <TableCell className="max-w-[200px] truncate">
-                      {device.purpose}
-                    </TableCell>
+                    <TableCell className="max-w-[200px] truncate">{device.purpose}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
                         <Button
                           variant="outline"
                           size="icon"
                           onClick={() => {
-                            setEditingDevice(device);
-                            setIsModalOpen(true);
+                            setEditingDevice(device)
+                            setIsModalOpen(true)
                           }}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          onClick={() => confirmDeleteDevice(device)}
-                        >
+                        <Button variant="destructive" size="icon" onClick={() => confirmDeleteDevice(device)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -224,31 +214,24 @@ export default function DevicesPage() {
           <DeviceModal
             isOpen={isModalOpen}
             onClose={() => {
-              setIsModalOpen(false);
-              setEditingDevice(null);
+              setIsModalOpen(false)
+              setEditingDevice(null)
             }}
             onSubmit={handleAddOrUpdateDevice}
             initialData={editingDevice || undefined}
             isEditing={!!editingDevice}
           />
 
-          <AlertDialog
-            open={!!deviceToDelete}
-            onOpenChange={(open) => !open && setDeviceToDelete(null)}
-          >
+          <AlertDialog open={!!deviceToDelete} onOpenChange={(open) => !open && setDeviceToDelete(null)}>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete Device</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to delete &quot;
-                  {deviceToDelete?.deviceName}&quot;? This action cannot be
-                  undone.
+                  Are you sure you want to delete "{deviceToDelete?.deviceName}"? This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel disabled={isDeleting}>
-                  Cancel
-                </AlertDialogCancel>
+                <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDeleteDevice}
                   disabled={isDeleting}
@@ -262,6 +245,6 @@ export default function DevicesPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  );
+  )
 }
 
