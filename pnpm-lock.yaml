@@ -72,8 +72,8 @@ importers:
         specifier: ^1.1.8
         version: 1.1.8(@types/react-dom@19.0.4(@types/react@19.0.12))(@types/react@19.0.12)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@visx/axis':
-        specifier: ^3.12.0
-        version: 3.12.0(react@19.0.0)
+        specifier: next
+        version: 3.13.2-alpha.0(react@19.0.0)
       '@visx/curve':
         specifier: ^3.12.0
         version: 3.12.0
@@ -81,11 +81,11 @@ importers:
         specifier: ^3.12.0
         version: 3.12.0
       '@visx/gradient':
-        specifier: ^3.12.0
-        version: 3.12.0(react@19.0.0)
+        specifier: next
+        version: 3.13.0-alpha.0(react@19.0.0)
       '@visx/grid':
-        specifier: ^3.12.0
-        version: 3.12.0(react@19.0.0)
+        specifier: next
+        version: 3.13.0-alpha.0(react@19.0.0)
       '@visx/group':
         specifier: ^3.12.0
         version: 3.12.0(react@19.0.0)
@@ -152,9 +152,6 @@ importers:
       unstorage:
         specifier: ^1.15.0
         version: 1.15.0(@azure/cosmos@4.3.0)(@azure/identity@4.8.0)(@azure/storage-blob@12.27.0)(ioredis@5.6.0)
-      ws:
-        specifier: ^8.18.1
-        version: 8.18.1
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3.3.1
@@ -1617,10 +1614,10 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@visx/axis@3.12.0':
-    resolution: {integrity: sha512-8MoWpfuaJkhm2Yg+HwyytK8nk+zDugCqTT/tRmQX7gW4LYrHYLXFUXOzbDyyBakCVaUbUaAhVFxpMASJiQKf7A==}
+  '@visx/axis@3.13.2-alpha.0':
+    resolution: {integrity: sha512-lgiheMdRdRQ5kLHe6UftEMZYwOInlzbHStfhwlW5id3gGGoCTjXmJpRRkXs2KkOjP7up3JnMg8VcbAFCtXHiWg==}
     peerDependencies:
-      react: ^16.3.0-0 || ^17.0.0-0 || ^18.0.0-0
+      react: ^16.3.0-0 || ^17.0.0-0 || ^18.0.0-0 || ^19.0.0-0
 
   '@visx/bounds@3.12.0':
     resolution: {integrity: sha512-peAlNCUbYaaZ0IO6c1lDdEAnZv2iGPDiLIM8a6gu7CaMhtXZJkqrTh+AjidNcIqITktrICpGxJE/Qo9D099dvQ==}
@@ -1634,20 +1631,25 @@ packages:
   '@visx/event@3.12.0':
     resolution: {integrity: sha512-9Lvw6qJ0Fi+y1vsC1WspfdIKCxHTb7oy59Uql1uBdPGT8zChP0vuxW0jQNQRDbKgoefj4pCXAFi8+MF1mEtVTw==}
 
-  '@visx/gradient@3.12.0':
-    resolution: {integrity: sha512-QRatjjdUEPbcp4pqRca1JlChpAnmmIAO3r3ZscLK7D1xEIANlIjzjl3uNgrmseYmBAYyPCcJH8Zru07R97ovOg==}
+  '@visx/gradient@3.13.0-alpha.0':
+    resolution: {integrity: sha512-jGD2qF+B7hKBHqeFSqpBlSUkbXYe2dXnT+oZncvHRkHU7EFdSRM1Ubhae3fU6SjcPyC8L0eHdbDX3ak95bIphQ==}
     peerDependencies:
-      react: ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0
+      react: ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0 || ^19.0.0-0
 
-  '@visx/grid@3.12.0':
-    resolution: {integrity: sha512-L4ex2ooSYhwNIxJ3XFIKRhoSvEGjPc2Y3YCrtNB4TV5Ofdj4q0UMOsxfrH23Pr8HSHuQhb6VGMgYoK0LuWqDmQ==}
+  '@visx/grid@3.13.0-alpha.0':
+    resolution: {integrity: sha512-54kmaedAb4qfQEdbq4iO2SuRhdLUKJQu+AyoPWQZpv/xMbIyrSsHSOAuqwYCDPlzCvyLlP9GcgwFmj2tUalwAQ==}
     peerDependencies:
-      react: ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0
+      react: ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0 || ^19.0.0-0
 
   '@visx/group@3.12.0':
     resolution: {integrity: sha512-Dye8iS1alVXPv7nj/7M37gJe6sSKqJLH7x6sEWAsRQ9clI0kFvjbKcKgF+U3aAVQr0NCohheFV+DtR8trfK/Ag==}
     peerDependencies:
       react: ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0
+
+  '@visx/group@3.13.0-alpha.0':
+    resolution: {integrity: sha512-5N1CPhzeOHspcS1KC3T87KWGAr8fnfqdw9SY1TsuPl/DZqcmRemExY1SQUVhiH4Okf0UJW1sgnh6mDq1LnyfnA==}
+    peerDependencies:
+      react: ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0 || ^19.0.0-0
 
   '@visx/legend@3.12.0':
     resolution: {integrity: sha512-Tr6hdauEDXRXVNeNgIQ9JtCCrxn8Fbr8UCVlO9XsSxenk2hBC/2PIY5QPzpnKFEEEuH/C8vhj8T0JfFZV+D9zQ==}
@@ -1670,10 +1672,20 @@ packages:
     peerDependencies:
       react: ^16.3.0-0 || ^17.0.0-0 || ^18.0.0-0
 
+  '@visx/shape@3.13.0-alpha.0':
+    resolution: {integrity: sha512-nreeNIbGzafMVuv68HzD4u38oACmZzatvsdGw6v3ScGKFTGj65X7qFQs4u27haonqwVnyIsdOk/sASK5sPHCWA==}
+    peerDependencies:
+      react: ^16.3.0-0 || ^17.0.0-0 || ^18.0.0-0 || ^19.0.0-0
+
   '@visx/text@3.12.0':
     resolution: {integrity: sha512-0rbDYQlbuKPhBqXkkGYKFec1gQo05YxV45DORzr6hCyaizdJk1G+n9VkuKSHKBy1vVQhBA0W3u/WXd7tiODQPA==}
     peerDependencies:
       react: ^16.3.0-0 || ^17.0.0-0 || ^18.0.0-0
+
+  '@visx/text@3.13.2-alpha.0':
+    resolution: {integrity: sha512-V9r2DLdaHdArkzUNDeYpBFyRhGrOmLb9bMoRdXwW/Sl0GsRcthrvdhvwKscRIGyCPXlVqf4tsO8UUzyDEMmbNA==}
+    peerDependencies:
+      react: ^16.3.0-0 || ^17.0.0-0 || ^18.0.0-0 || ^19.0.0-0
 
   '@visx/tooltip@3.12.0':
     resolution: {integrity: sha512-pWhsYhgl0Shbeqf80qy4QCB6zpq6tQtMQQxKlh3UiKxzkkfl+Metaf9p0/S0HexNi4vewOPOo89xWx93hBeh3A==}
@@ -3644,18 +3656,6 @@ packages:
     resolution: {integrity: sha512-si7QWI6zUMq56bESFvagtmzMdGOtoxfR+Sez11Mobfc7tm+VkUckk9bW2UeffTGVUbOksxmSw0AA2gs8g71NCQ==}
     engines: {node: '>=12'}
 
-  ws@8.18.1:
-    resolution: {integrity: sha512-RKW2aJZMXeMxVpnZ6bck+RswznaxmzdULiBr6KY7XkTnW8uvt0iT9H5DkHUChXrc+uurzwa0rVI16n/Xzjdz1w==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: '>=5.0.2'
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
   xtend@4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
     engines: {node: '>=0.4'}
@@ -5332,14 +5332,14 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.3.2':
     optional: true
 
-  '@visx/axis@3.12.0(react@19.0.0)':
+  '@visx/axis@3.13.2-alpha.0(react@19.0.0)':
     dependencies:
       '@types/react': 19.0.12
-      '@visx/group': 3.12.0(react@19.0.0)
+      '@visx/group': 3.13.0-alpha.0(react@19.0.0)
       '@visx/point': 3.12.0
       '@visx/scale': 3.12.0
-      '@visx/shape': 3.12.0(react@19.0.0)
-      '@visx/text': 3.12.0(react@19.0.0)
+      '@visx/shape': 3.13.0-alpha.0(react@19.0.0)
+      '@visx/text': 3.13.2-alpha.0(react@19.0.0)
       classnames: 2.5.1
       prop-types: 15.8.1
       react: 19.0.0
@@ -5362,25 +5362,32 @@ snapshots:
       '@types/react': 19.0.12
       '@visx/point': 3.12.0
 
-  '@visx/gradient@3.12.0(react@19.0.0)':
+  '@visx/gradient@3.13.0-alpha.0(react@19.0.0)':
     dependencies:
       '@types/react': 19.0.12
       prop-types: 15.8.1
       react: 19.0.0
 
-  '@visx/grid@3.12.0(react@19.0.0)':
+  '@visx/grid@3.13.0-alpha.0(react@19.0.0)':
     dependencies:
       '@types/react': 19.0.12
       '@visx/curve': 3.12.0
-      '@visx/group': 3.12.0(react@19.0.0)
+      '@visx/group': 3.13.0-alpha.0(react@19.0.0)
       '@visx/point': 3.12.0
       '@visx/scale': 3.12.0
-      '@visx/shape': 3.12.0(react@19.0.0)
+      '@visx/shape': 3.13.0-alpha.0(react@19.0.0)
       classnames: 2.5.1
       prop-types: 15.8.1
       react: 19.0.0
 
   '@visx/group@3.12.0(react@19.0.0)':
+    dependencies:
+      '@types/react': 19.0.12
+      classnames: 2.5.1
+      prop-types: 15.8.1
+      react: 19.0.0
+
+  '@visx/group@3.13.0-alpha.0(react@19.0.0)':
     dependencies:
       '@types/react': 19.0.12
       classnames: 2.5.1
@@ -5426,7 +5433,33 @@ snapshots:
       prop-types: 15.8.1
       react: 19.0.0
 
+  '@visx/shape@3.13.0-alpha.0(react@19.0.0)':
+    dependencies:
+      '@types/d3-path': 1.0.11
+      '@types/d3-shape': 1.3.12
+      '@types/lodash': 4.17.16
+      '@types/react': 19.0.12
+      '@visx/curve': 3.12.0
+      '@visx/group': 3.13.0-alpha.0(react@19.0.0)
+      '@visx/scale': 3.12.0
+      classnames: 2.5.1
+      d3-path: 1.0.9
+      d3-shape: 1.3.7
+      lodash: 4.17.21
+      prop-types: 15.8.1
+      react: 19.0.0
+
   '@visx/text@3.12.0(react@19.0.0)':
+    dependencies:
+      '@types/lodash': 4.17.16
+      '@types/react': 19.0.12
+      classnames: 2.5.1
+      lodash: 4.17.21
+      prop-types: 15.8.1
+      react: 19.0.0
+      reduce-css-calc: 1.3.0
+
+  '@visx/text@3.13.2-alpha.0(react@19.0.0)':
     dependencies:
       '@types/lodash': 4.17.16
       '@types/react': 19.0.12
@@ -7746,8 +7779,6 @@ snapshots:
       ansi-styles: 6.2.1
       string-width: 5.1.2
       strip-ansi: 7.1.0
-
-  ws@8.18.1: {}
 
   xtend@4.0.2: {}
 
