@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "start": "next start",
+    "start": "node --require ./vendor/appinsights.cjs node_modules/next/dist/bin/next start -p $PORT",
     "build": "next build",
     "lint": "next lint"
   },

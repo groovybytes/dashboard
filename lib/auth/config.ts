@@ -8,8 +8,8 @@ export const AZURE_ENTRA_CLIENT_SECRET = process.env.AZURE_ENTRA_CLIENT_SECRET ?
 export const AZURE_ENTRA_TENANT_NAME = process.env.AZURE_ENTRA_TENANT_NAME ?? "azure_entra_tenant_name";
 
 // Retrieve JWT-related secrets and salts from environment variables
-export const AUTH_SECRET = process.env.AUTH_SECRET ?? generateRandomHex(32); // openssl rand -base64 32
-export const AUTH_SALT = process.env.AUTH_SALT ?? generateRandomHex(32); // openssl rand -base64 32
+export const AUTH_SECRET = process.env.AUTH_SECRET ?? generateRandomHex(64); // openssl rand -base64 32
+export const AUTH_SALT = process.env.AUTH_SALT ?? generateRandomHex(64); // openssl rand -base64 32
 
 export const BASE_URL = process.env.BASE_URL ?? "http://localhost:3000";
 export const REDIRECT_URI = process.env.REDIRECT_URI ?? `${BASE_URL}/api/auth/redirect`;
