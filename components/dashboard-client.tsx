@@ -192,7 +192,7 @@ export function DashboardClient({ profile }: DashboardClientProps) {
                     <CardContent>
                       <DonutChart
                         data={energyData.byDevice}
-                        category="value"
+                        categories={["value"]}
                         index="name"
                         valueFormatter={(value) => `${value} kWh`}
                         colors={["blue", "cyan", "indigo", "violet"]}
