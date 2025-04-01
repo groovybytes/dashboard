@@ -1,6 +1,7 @@
 import type { Configuration } from "@azure/msal-node";
 import { LogLevel } from "@azure/msal-node";
 import { generateRandomHex } from "./utils";
+
 import process from "node:process";
 
 export const AZURE_ENTRA_CLIENT_ID = process.env.AZURE_ENTRA_CLIENT_ID ?? "azure_entra_client_id";
