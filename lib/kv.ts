@@ -343,63 +343,71 @@ export async function initializeStorage(
     password?: string;
   }
 ) {
-  const useEntraIdentity =
-    redisConfig?.useEntraIdentity ||
-    process.env.REDIS_ENTRA_IDENTITY?.trim()?.toLowerCase() === "true";
+  try {
+    const useEntraIdentity =
+      redisConfig?.useEntraIdentity ||
+      process.env.REDIS_ENTRA_IDENTITY?.trim()?.toLowerCase() === "true";
 
-  const useCluster =
-    redisConfig?.useCluster ||
-    process.env.REDIS_CLUSTER_ENABLED?.trim()?.toLowerCase() === "true";
+    const useCluster =
+      redisConfig?.useCluster ||
+      process.env.REDIS_CLUSTER_ENABLED?.trim()?.toLowerCase() === "true";
 
-  let credential: DefaultAzureCredential | null = null;
-  let accessToken: AccessToken | null = null;
+    let credential: DefaultAzureCredential | null = null;
+    let accessToken: AccessToken | null = null;
 
-  if (useEntraIdentity) {
-    try {
-      // Try to obtain an Azure access token via managed identity
-      credential = new DefaultAzureCredential();
-      accessToken = await getRedisToken(credential);
-      if (!accessToken) {
-        throw new Error("Could not obtain initial Azure access token.");
-      }
-    } catch (error) {
-      console.error("Azure managed identity login failed, falling back to in-memory storage:", error);
-      // Fallback: remove the host so that the in-memory unstorage driver is used
-      if (redisConfig) {
-        redisConfig.host = undefined;
-      } else {
-        redisConfig = { host: undefined };
+    if (useEntraIdentity) {
+      try {
+        // Try to obtain an Azure access token via managed identity
+        credential = new DefaultAzureCredential();
+        accessToken = await getRedisToken(credential);
+        if (!accessToken) {
+          throw new Error("Could not obtain initial Azure access token.");
+        }
+      } catch (error) {
+        console.error("Azure managed identity login failed, falling back to in-memory storage:", error);
+        // Fallback: remove the host so that the in-memory unstorage driver is used
+        if (redisConfig) {
+          redisConfig.host = undefined;
+        } else {
+          redisConfig = { host: undefined };
+        }
       }
     }
-  }
 
-  const driverOptions = getDriverOptions(
-    (redisConfig as RedisOptions) || {},
-    accessToken || undefined,
-    useEntraIdentity,
-    useCluster,
-  );
-
-  const _host = redisConfig?.host ?? process.env.REDIS_HOST; 
-
-  // Create the driver: use Redis driver if a host is provided; otherwise, fallback to in-memory driver.
-  const driver = _host ? redisDriver(driverOptions) : lruCacheDriver({});
-
-  // Create the unstorage storage instance.
-  const storage = createStorage({ driver });
-
-  // If using Managed Identity and a host is provided, attach token refresh logic.
-  if (useEntraIdentity && credential && _host) {
-    const redisClient = driver.getInstance!() as Redis | Cluster;
-    const refreshInterval = redisConfig?.tokenRefreshIntervalMs || (
-      accessToken?.expiresOnTimestamp ?
-        (accessToken!.expiresOnTimestamp - Date.now()) :
-        240_000  // default 4 minutes
+    const driverOptions = getDriverOptions(
+      (redisConfig as RedisOptions) || {},
+      accessToken || undefined,
+      useEntraIdentity,
+      useCluster,
     );
-    await setupTokenRefresh(redisClient, credential, refreshInterval);
-  }
 
-  return storage;
+    const _host = redisConfig?.host ?? process.env.REDIS_HOST; 
+
+    // Create the driver: use Redis driver if a host is provided; otherwise, fallback to in-memory driver.
+    const driver = _host ? redisDriver(driverOptions) : lruCacheDriver({});
+
+    // Create the unstorage storage instance.
+    const storage = createStorage({ driver });
+
+    // If using Managed Identity and a host is provided, attach token refresh logic.
+    if (useEntraIdentity && credential && _host) {
+      const redisClient = driver.getInstance!() as Redis | Cluster;
+      const refreshInterval = redisConfig?.tokenRefreshIntervalMs || (
+        accessToken?.expiresOnTimestamp ?
+          (accessToken!.expiresOnTimestamp - Date.now()) :
+          240_000  // default 4 minutes
+      );
+      await setupTokenRefresh(redisClient, credential, refreshInterval);
+    }
+
+    return storage;
+  } catch (e) {
+    console.log({
+      error: e,
+      message: "Error initializing Redis driver",
+    })
+    return createStorage({ driver: lruCacheDriver({}) });
+  }
 }
 
 //
