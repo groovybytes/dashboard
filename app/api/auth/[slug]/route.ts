@@ -94,14 +94,14 @@ export async function GET(
       }, { status: 200 })
     }
 
-    return NextResponse.json({ 
-      state: "no-kv",
-      authority, 
-      slug, 
-      referer, 
-      verifier, 
-      challenge, 
-    }, { status: 200 })
+    // return NextResponse.json({ 
+    //   state: "no-kv",
+    //   authority, 
+    //   slug, 
+    //   referer, 
+    //   verifier, 
+    //   challenge, 
+    // }, { status: 200 })
 
     // Create a secure token that encapsulates both a random state (for CSRF) and the authority.
     // const state = await createToken({
