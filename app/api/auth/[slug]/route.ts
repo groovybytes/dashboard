@@ -87,6 +87,11 @@ export async function GET(
         e,
         kv: "Set KV"
       })
+
+      return NextResponse.json({ 
+        state: "error",
+        error: e
+      }, { status: 200 })
     }
 
     return NextResponse.json({ 
