@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 // Layout components
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
@@ -25,93 +25,260 @@ import {
   BarChart3,
   TrendingUp,
   Network,
+  RefreshCw,
 } from "lucide-react"
-// Data generators
-import {
-  generateFootTrafficData,
-  generateEnergyConsumptionData,
-  generateSalesData,
-  generateInventoryData,
-  generatePatternInsights,
-  generateRelationshipData,
-} from "@/lib/data-generators"
 import Link from "next/link"
+
+// Change the API_URL from a relative URL to the absolute URL of your backend server
+const API_URL = "http://localhost:3050/api/dashboard"
 
 interface DashboardClientProps {
   profile: any | null
 }
 
 export function DashboardClient({ profile }: DashboardClientProps) {
-  const [footTrafficData, setFootTrafficData] = useState<any>(null)
-  const [energyData, setEnergyData] = useState<any>(null)
-  const [salesData, setSalesData] = useState<any>(null)
-  const [inventoryData, setInventoryData] = useState<any>(null)
-  const [patternInsights, setPatternInsights] = useState<any>(null)
-  const [relationshipData, setRelationshipData] = useState<any>(null)
+  const [dashboardData, setDashboardData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+  const [error, setError] = useState<string | null>(null)
+  const [wsConnected, setWsConnected] = useState(false)
 
-  const getRandomChange = () => {
-    const value = (Math.random() * 20 - 10).toFixed(1)
-    return value.startsWith("-") ? value : `+${value}`
+  // Function to generate fallback data when API is unavailable
+  const generateFallbackData = () => {
+    return {
+      businessMetrics: {
+        dailyRevenue: { value: 8500, trend: "up", changePercentage: 12 },
+        customerTraffic: { value: 750, trend: "up", changePercentage: 8 },
+        conversionRate: { value: 25, trend: "down", changePercentage: 3 },
+        energyUsage: { value: 320, trend: "up", changePercentage: 5 },
+        byCategory: [
+          { category: "Electronics", sales: 1200 },
+          { category: "Clothing", sales: 950 },
+          { category: "Groceries", sales: 1500 },
+          { category: "Home & Garden", sales: 800 },
+          { category: "Toys", sales: 600 },
+          { category: "Books", sales: 450 },
+        ],
+        byDepartment: [
+          { department: "Front", current: 75, optimal: 90 },
+          { department: "Back", current: 60, optimal: 80 },
+          { department: "Warehouse", current: 85, optimal: 95 },
+          { department: "Checkout", current: 50, optimal: 70 },
+          { department: "Customer Service", current: 65, optimal: 75 },
+        ],
+      },
+      deviceData: {
+        hourlyComparison: Array.from({ length: 24 }, (_, i) => ({
+          hour: `${i}:00`,
+          footTraffic: Math.floor(Math.random() * 150) + 50,
+          sales: Math.floor(Math.random() * 900) + 100,
+        })),
+        energyConsumption: [
+          { name: "Camera", value: 85 },
+          { name: "Sensor", value: 60 },
+          { name: "Display", value: 110 },
+          { name: "Scanner", value: 70 },
+          { name: "POS Terminal", value: 95 },
+        ],
+      },
+      insights: {
+        anomalies: [
+          {
+            title: "HVAC Energy Spike",
+            description: "Unusual energy consumption detected from HVAC system between 2:00 AM and 4:00 AM.",
+            severity: "high",
+            detectedAt: new Date().toISOString(),
+          },
+          {
+            title: "Inventory Discrepancy",
+            description: "Smart shelf sensors report 15 units of SKU-1234, but POS system shows 23 units sold today.",
+            severity: "medium",
+            detectedAt: new Date().toISOString(),
+          },
+        ],
+        patterns: [
+          {
+            title: "Weekly Sales Cycle",
+            description: "Sales consistently peak on Fridays and Saturdays, with 30% higher revenue than mid-week.",
+            confidence: 0.92,
+          },
+          {
+            title: "Inventory-Sales Correlation",
+            description:
+              "Products displayed at eye level show 24% higher sales conversion than those on bottom shelves.",
+            confidence: 0.87,
+          },
+        ],
+        costOptimizations: [
+          {
+            title: "HVAC Scheduling Optimization",
+            description: "Adjusting HVAC schedules to align with store hours could reduce energy costs.",
+            potentialSavings: "$320/month",
+            implementationEffort: "Low",
+          },
+          {
+            title: "Lighting Sensor Installation",
+            description: "Installing motion sensors in low-traffic areas could reduce lighting costs.",
+            potentialSavings: "$150/month",
+            implementationEffort: "Medium",
+          },
+        ],
+      },
+      relationships: {
+        connections: [
+          {
+            title: "Foot Traffic → Sales Conversion",
+            description: "Strong correlation between foot traffic and sales with a 20-minute lag time.",
+            source: "Foot Traffic Sensors",
+            target: "POS System",
+            correlationStrength: 0.87,
+          },
+          {
+            title: "Weather → Energy Usage",
+            description: "External temperature directly impacts HVAC energy consumption.",
+            source: "Weather API",
+            target: "HVAC Sensors",
+            correlationStrength: 0.92,
+          },
+        ],
+        customerBehavior: [
+          {
+            title: "Promotion Effectiveness",
+            description:
+              "Customers who view digital signage promotions are 2.3x more likely to purchase featured items.",
+            confidence: 0.85,
+          },
+          {
+            title: "Traffic Flow Pattern",
+            description:
+              "76% of customers follow a counter-clockwise shopping pattern, spending more time in the back-right quadrant of the store.",
+            confidence: 0.91,
+          },
+        ],
+        inventorySalesRelationship: Array.from({ length: 5 }, (_, i) => {
+          const date = new Date()
+          date.setDate(date.getDate() - i)
+          return {
+            date: date.toISOString().split("T")[0],
+            inventoryLevel: Math.floor(Math.random() * 800) + 200,
+            salesPerformance: Math.floor(Math.random() * 800) + 100,
+          }
+        }),
+      },
+    }
   }
 
-  const getRandomValue = (base: number, variance: number) => {
-    return Math.floor(base + Math.random() * variance * 2 - variance)
-  }
+  // Update the fetchDashboardData function to better handle non-JSON responses
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      // Try to fetch from the API with the absolute URL
+      console.log("Fetching data from:", API_URL)
+      const response = await fetch(API_URL, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      })
 
-  // Create derived values for KPIs that change on refresh
-  const dailyRevenue = `$${getRandomValue(4320, 500).toLocaleString()}`
-  const dailyRevenueChange = getRandomChange()
-  const dailyRevenueTrend = dailyRevenueChange.startsWith("-") ? "down" : "up"
+      // Check if the response is JSON by looking at the content-type header
+      const contentType = response.headers.get("content-type")
+      if (!contentType || !contentType.includes("application/json")) {
+        // If not JSON, log the text response for debugging
+        const textResponse = await response.text()
+        console.error("Non-JSON response received:", textResponse.substring(0, 100) + "...")
+        throw new Error("API returned non-JSON response")
+      }
 
-  const customerTraffic = getRandomValue(342, 30).toString()
-  const customerTrafficChange = getRandomChange()
-  const customerTrafficTrend = customerTrafficChange.startsWith("-") ? "down" : "up"
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
 
-  const conversionRate = `${getRandomValue(24, 3)}.${getRandomValue(1, 9)}%`
-  const conversionRateChange = getRandomChange()
-  const conversionRateTrend = conversionRateChange.startsWith("-") ? "down" : "up"
+      const data = await response.json()
+      console.log("API data received:", data)
+      setDashboardData(data)
+      setLastUpdated(new Date())
+      setError(null)
+      return data
+    } catch (err) {
+      console.error("Error fetching dashboard data:", err)
 
-  const energyUsage = `${getRandomValue(142, 15)} kWh`
-  const energyUsageChange = getRandomChange()
-  const energyUsageTrend = energyUsageChange.startsWith("-") ? "down" : "up"
+      // Use fallback data if API is unavailable
+      const fallbackData = generateFallbackData()
+      setDashboardData(fallbackData)
+      setLastUpdated(new Date())
+      setError(`Using fallback data. API connection failed: ${err.message}`)
 
-  const refreshData = async () => {
+      return fallbackData
+    }
+  }, [])
+
+  // Function to handle manual refresh
+  const handleRefresh = async () => {
     setIsRefreshing(true)
-
-    // Generate new data
-    const footTraffic = await generateFootTrafficData()
-    const energy = await generateEnergyConsumptionData()
-    const sales = await generateSalesData()
-    const inventory = await generateInventoryData()
-    const patterns = await generatePatternInsights()
-    const relationships = await generateRelationshipData()
-
-    // Update state with new data
-    setFootTrafficData(footTraffic)
-    setEnergyData(energy)
-    setSalesData(sales)
-    setInventoryData(inventory)
-    setPatternInsights(patterns)
-    setRelationshipData(relationships)
-
-    // Update the last updated timestamp
-    setLastUpdated(new Date())
+    await fetchDashboardData()
     setIsRefreshing(false)
   }
 
+  // Also update the WebSocket connection to use the absolute URL
   useEffect(() => {
-    // Simulate data loading
     const loadData = async () => {
       setIsLoading(true)
-      await refreshData()
+      await fetchDashboardData()
       setIsLoading(false)
     }
 
     loadData()
-  }, [])
+
+    // Set up WebSocket for real-time updates
+    let ws: WebSocket | null = null
+
+    try {
+      // Use absolute WebSocket URL
+      const wsUrl = "ws://localhost:3050/api/dashboard/realtime"
+
+      console.log("Connecting to WebSocket:", wsUrl)
+      ws = new WebSocket(wsUrl)
+
+      ws.onopen = () => {
+        console.log("WebSocket connected")
+        setWsConnected(true)
+      }
+
+      ws.onmessage = (event) => {
+        try {
+          const wsData = JSON.parse(event.data)
+          console.log("WebSocket data received:", wsData)
+          if (wsData.data) {
+            setDashboardData(wsData.data)
+            setLastUpdated(new Date())
+          }
+        } catch (err) {
+          console.error("Error parsing WebSocket data:", err)
+        }
+      }
+
+      ws.onerror = (err) => {
+        console.error("WebSocket error:", err)
+        setWsConnected(false)
+      }
+
+      ws.onclose = () => {
+        console.log("WebSocket disconnected")
+        setWsConnected(false)
+      }
+    } catch (err) {
+      console.error("WebSocket setup error:", err)
+    }
+
+    // Cleanup WebSocket on component unmount
+    return () => {
+      if (ws) {
+        ws.close()
+      }
+    }
+  }, [fetchDashboardData])
 
   if (isLoading) {
     return (
@@ -121,13 +288,39 @@ export function DashboardClient({ profile }: DashboardClientProps) {
           <div className="flex items-center justify-center h-[600px]">
             <div className="text-center">
               <h2 className="text-2xl font-semibold mb-2">Loading Dashboard Data...</h2>
-              <p className="text-muted-foreground">Analyzing retail store data and generating insights...</p>
+              <p className="text-muted-foreground">Connecting to backend and fetching data...</p>
             </div>
           </div>
         </SidebarInset>
       </SidebarProvider>
     )
   }
+
+  // Extract data for visualization
+  const {
+    businessMetrics = {},
+    deviceData = {},
+    insights = {},
+    relationships = {},
+    systemStatus = {},
+  } = dashboardData || {}
+
+  // Format hourly data for the line chart
+  const hourlyData =
+    deviceData.hourlyComparison?.map((item: any) => ({
+      hour: item.hour,
+      "Foot Traffic": item.footTraffic,
+      Sales: item.sales,
+    })) || []
+
+  // Format energy consumption data for the donut chart
+  const energyData = deviceData.energyConsumption || []
+
+  // Format sales by category data for the bar chart
+  const salesData = businessMetrics.byCategory || []
+
+  // Format inventory data for the bar chart
+  const inventoryData = businessMetrics.byDepartment || []
 
   return (
     <SidebarProvider>
@@ -145,19 +338,32 @@ export function DashboardClient({ profile }: DashboardClientProps) {
               </Link>
             </div>
             <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+              <h1 className="text-3xl font-bold tracking-tight">Retail Store Dashboard</h1>
               <div className="flex items-center gap-2">
+                {error && (
+                  <Badge variant="destructive" className="text-sm">
+                    {error}
+                  </Badge>
+                )}
+                {wsConnected && (
+                  <Badge variant="outline" className="bg-green-100 text-green-600 text-sm">
+                    Live Data
+                  </Badge>
+                )}
                 <Badge variant="outline" className="text-sm">
                   Last updated: {lastUpdated.toLocaleTimeString()}
                 </Badge>
-                <Button variant="outline" size="sm" onClick={refreshData} disabled={isRefreshing}>
+                <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing}>
                   {isRefreshing ? (
                     <>
-                      <span className="animate-spin mr-2">⟳</span>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                       Refreshing...
                     </>
                   ) : (
-                    <>Refresh Data</>
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Refresh Data
+                    </>
                   )}
                 </Button>
               </div>
@@ -176,33 +382,33 @@ export function DashboardClient({ profile }: DashboardClientProps) {
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                   <KpiCard
                     title="Daily Revenue"
-                    value={dailyRevenue}
-                    change={`${dailyRevenueChange}%`}
-                    trend={dailyRevenueTrend as "up" | "down"}
+                    value={`$${businessMetrics.dailyRevenue?.value?.toLocaleString() || "0"}`}
+                    change={`${businessMetrics.dailyRevenue?.changePercentage || 0}%`}
+                    trend={businessMetrics.dailyRevenue?.trend || "up"}
                     icon={<DollarSign className="h-4 w-4" />}
                     description="vs. previous day"
                   />
                   <KpiCard
                     title="Customer Traffic"
-                    value={customerTraffic}
-                    change={`${customerTrafficChange}%`}
-                    trend={customerTrafficTrend as "up" | "down"}
+                    value={businessMetrics.customerTraffic?.value?.toString() || "0"}
+                    change={`${businessMetrics.customerTraffic?.changePercentage || 0}%`}
+                    trend={businessMetrics.customerTraffic?.trend || "up"}
                     icon={<Users className="h-4 w-4" />}
                     description="vs. previous day"
                   />
                   <KpiCard
                     title="Conversion Rate"
-                    value={conversionRate}
-                    change={`${conversionRateChange}%`}
-                    trend={conversionRateTrend as "up" | "down"}
+                    value={`${businessMetrics.conversionRate?.value || 0}%`}
+                    change={`${businessMetrics.conversionRate?.changePercentage || 0}%`}
+                    trend={businessMetrics.conversionRate?.trend || "up"}
                     icon={<ShoppingCart className="h-4 w-4" />}
                     description="vs. previous day"
                   />
                   <KpiCard
                     title="Energy Usage"
-                    value={energyUsage}
-                    change={`${energyUsageChange}%`}
-                    trend={energyUsageTrend as "up" | "down"}
+                    value={`${businessMetrics.energyUsage?.value || 0} kWh`}
+                    change={`${businessMetrics.energyUsage?.changePercentage || 0}%`}
+                    trend={businessMetrics.energyUsage?.trend || "up"}
                     icon={<Zap className="h-4 w-4" />}
                     description="vs. previous day"
                   />
@@ -216,15 +422,21 @@ export function DashboardClient({ profile }: DashboardClientProps) {
                       <CardDescription>Hourly comparison for today</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <LineChart
-                        data={footTrafficData.hourlyComparison}
-                        categories={["Foot Traffic", "Sales"]}
-                        index="hour"
-                        colors={["blue", "green"]}
-                        valueFormatter={(value) => `${value}`}
-                        yAxisWidth={40}
-                        className="h-[300px]"
-                      />
+                      {hourlyData.length > 0 ? (
+                        <LineChart
+                          data={hourlyData}
+                          categories={["Foot Traffic", "Sales"]}
+                          index="hour"
+                          colors={["blue", "green"]}
+                          valueFormatter={(value) => `${value}`}
+                          yAxisWidth={40}
+                          className="h-[300px]"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-[300px]">
+                          <p className="text-muted-foreground">No data available</p>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                   <Card>
@@ -233,14 +445,20 @@ export function DashboardClient({ profile }: DashboardClientProps) {
                       <CardDescription>By device type</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <DonutChart
-                        data={energyData.byDevice}
-                        categories={["value"]}
-                        index="name"
-                        valueFormatter={(value) => `${value} kWh`}
-                        colors={["blue", "cyan", "indigo", "violet"]}
-                        className="h-[300px]"
-                      />
+                      {energyData.length > 0 ? (
+                        <DonutChart
+                          data={energyData}
+                          category="value"
+                          index="name"
+                          valueFormatter={(value) => `${value} kWh`}
+                          colors={["blue", "cyan", "indigo", "violet"]}
+                          className="h-[300px]"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-[300px]">
+                          <p className="text-muted-foreground">No data available</p>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
@@ -256,7 +474,7 @@ export function DashboardClient({ profile }: DashboardClientProps) {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {patternInsights.anomalies.map((anomaly: any, index: number) => (
+                      {insights.anomalies?.map((anomaly: any, index: number) => (
                         <div key={index} className="flex items-start gap-4 p-3 rounded-lg border">
                           <div
                             className={`p-2 rounded-full ${anomaly.severity === "high" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-600"}`}
@@ -270,11 +488,18 @@ export function DashboardClient({ profile }: DashboardClientProps) {
                               <Badge variant={anomaly.severity === "high" ? "destructive" : "outline"}>
                                 {anomaly.severity === "high" ? "High Priority" : "Medium Priority"}
                               </Badge>
-                              <span className="text-xs text-muted-foreground">Detected {anomaly.detectedAt}</span>
+                              <span className="text-xs text-muted-foreground">
+                                Detected {new Date(anomaly.detectedAt).toLocaleTimeString()}
+                              </span>
                             </div>
                           </div>
                         </div>
                       ))}
+                      {!insights.anomalies?.length && (
+                        <div className="text-center py-4">
+                          <p className="text-muted-foreground">No anomalies detected</p>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -289,14 +514,20 @@ export function DashboardClient({ profile }: DashboardClientProps) {
                       <CardDescription>Last 7 days</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <BarChart
-                        data={salesData.byCategory}
-                        index="category"
-                        categories={["sales"]}
-                        colors={["blue"]}
-                        valueFormatter={(value) => `$${value}`}
-                        className="h-[300px]"
-                      />
+                      {salesData.length > 0 ? (
+                        <BarChart
+                          data={salesData}
+                          index="category"
+                          categories={["sales"]}
+                          colors={["blue"]}
+                          valueFormatter={(value) => `$${value}`}
+                          className="h-[300px]"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-[300px]">
+                          <p className="text-muted-foreground">No data available</p>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                   <Card>
@@ -305,14 +536,20 @@ export function DashboardClient({ profile }: DashboardClientProps) {
                       <CardDescription>Current stock by department</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <BarChart
-                        data={inventoryData.byDepartment}
-                        index="department"
-                        categories={["current", "optimal"]}
-                        colors={["blue", "gray"]}
-                        valueFormatter={(value) => `${value} units`}
-                        className="h-[300px]"
-                      />
+                      {inventoryData.length > 0 ? (
+                        <BarChart
+                          data={inventoryData}
+                          index="department"
+                          categories={["current", "optimal"]}
+                          colors={["blue", "gray"]}
+                          valueFormatter={(value) => `${value} units`}
+                          className="h-[300px]"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-[300px]">
+                          <p className="text-muted-foreground">No data available</p>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
@@ -328,7 +565,7 @@ export function DashboardClient({ profile }: DashboardClientProps) {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {patternInsights.patterns.map((pattern: any, index: number) => (
+                      {insights.patterns?.map((pattern: any, index: number) => (
                         <div key={index} className="flex items-start gap-4 p-3 rounded-lg border">
                           <div className="p-2 rounded-full bg-primary/10 text-primary">
                             <BarChart3 className="h-5 w-5" />
@@ -338,12 +575,17 @@ export function DashboardClient({ profile }: DashboardClientProps) {
                             <p className="text-sm text-muted-foreground">{pattern.description}</p>
                             <div className="mt-2">
                               <Badge variant="outline" className="bg-primary/10">
-                                {pattern.confidence}% confidence
+                                {Math.round(pattern.confidence * 100)}% confidence
                               </Badge>
                             </div>
                           </div>
                         </div>
                       ))}
+                      {!insights.patterns?.length && (
+                        <div className="text-center py-4">
+                          <p className="text-muted-foreground">No patterns detected</p>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -359,7 +601,7 @@ export function DashboardClient({ profile }: DashboardClientProps) {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {patternInsights.costOptimizations.map((opportunity: any, index: number) => (
+                      {insights.costOptimizations?.map((opportunity: any, index: number) => (
                         <div key={index} className="flex items-start gap-4 p-3 rounded-lg border">
                           <div className="p-2 rounded-full bg-green-100 text-green-600">
                             <DollarSign className="h-5 w-5" />
@@ -378,6 +620,11 @@ export function DashboardClient({ profile }: DashboardClientProps) {
                           </div>
                         </div>
                       ))}
+                      {!insights.costOptimizations?.length && (
+                        <div className="text-center py-4">
+                          <p className="text-muted-foreground">No optimization opportunities found</p>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -395,7 +642,7 @@ export function DashboardClient({ profile }: DashboardClientProps) {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {relationshipData.connections.map((relationship: any, index: number) => (
+                      {relationships.connections?.map((relationship: any, index: number) => (
                         <div key={index} className="flex items-start gap-4 p-3 rounded-lg border">
                           <div className="p-2 rounded-full bg-primary/10 text-primary">
                             <Network className="h-5 w-5" />
@@ -411,11 +658,18 @@ export function DashboardClient({ profile }: DashboardClientProps) {
                               <Badge variant="outline" className="bg-purple-100 text-purple-600">
                                 {relationship.target}
                               </Badge>
-                              <Badge variant="outline">Correlation: {relationship.correlationStrength}</Badge>
+                              <Badge variant="outline">
+                                Correlation: {Math.round(relationship.correlationStrength * 100)}%
+                              </Badge>
                             </div>
                           </div>
                         </div>
                       ))}
+                      {!relationships.connections?.length && (
+                        <div className="text-center py-4">
+                          <p className="text-muted-foreground">No relationships found</p>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -428,17 +682,22 @@ export function DashboardClient({ profile }: DashboardClientProps) {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {relationshipData.customerBehavior.map((insight: any, index: number) => (
+                      {relationships.customerBehavior?.map((insight: any, index: number) => (
                         <div key={index} className="p-3 rounded-lg border">
                           <h4 className="font-medium">{insight.title}</h4>
                           <p className="text-sm text-muted-foreground">{insight.description}</p>
                           <div className="mt-2">
                             <Badge variant="outline" className="bg-primary/10">
-                              {insight.confidence}% confidence
+                              {Math.round(insight.confidence * 100)}% confidence
                             </Badge>
                           </div>
                         </div>
                       ))}
+                      {!relationships.customerBehavior?.length && (
+                        <div className="text-center py-4">
+                          <p className="text-muted-foreground">No customer behavior insights available</p>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -450,15 +709,21 @@ export function DashboardClient({ profile }: DashboardClientProps) {
                     <CardDescription>How inventory levels affect sales performance</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <LineChart
-                      data={relationshipData.inventorySalesRelationship}
-                      categories={["inventoryLevel", "salesPerformance"]}
-                      index="date"
-                      colors={["blue", "green"]}
-                      valueFormatter={(value) => `${value}%`}
-                      yAxisWidth={40}
-                      className="h-[300px]"
-                    />
+                    {relationships.inventorySalesRelationship?.length > 0 ? (
+                      <LineChart
+                        data={relationships.inventorySalesRelationship}
+                        categories={["inventoryLevel", "salesPerformance"]}
+                        index="date"
+                        colors={["blue", "green"]}
+                        valueFormatter={(value) => `${value}`}
+                        yAxisWidth={40}
+                        className="h-[300px]"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-[300px]">
+                        <p className="text-muted-foreground">No data available</p>
+                      </div>
+                    )}
                     <div className="mt-4 p-3 rounded-lg border">
                       <h4 className="font-medium">Key Insight</h4>
                       <p className="text-sm text-muted-foreground">
