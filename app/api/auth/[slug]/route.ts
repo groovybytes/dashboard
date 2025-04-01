@@ -57,7 +57,40 @@ export async function GET(
       challenge,
     })
 
+    try {
+      await kv.set(['cool'], JSON.stringify({
+        name: 'cool',
+        verifier,
+        challenge,
+        authority,
+        slug,
+        referer,
+      }));
+
+      const val = await kv.get<string>(['cool']);
+      console.log({
+        val,
+        verifier,
+        challenge,
+      })
+
+      return NextResponse.json({ 
+        state: "yes-kv",
+        authority, 
+        slug, 
+        referer, 
+        verifier, 
+        challenge, 
+      }, { status: 200 })
+    } catch (e) {
+      console.warn({
+        e,
+        kv: "Set KV"
+      })
+    }
+
     return NextResponse.json({ 
+      state: "no-kv",
       authority, 
       slug, 
       referer, 
