@@ -49,28 +49,64 @@ export function DashboardClient({ profile }: DashboardClientProps) {
   const [patternInsights, setPatternInsights] = useState<any>(null)
   const [relationshipData, setRelationshipData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const getRandomChange = () => {
+    const value = (Math.random() * 20 - 10).toFixed(1)
+    return value.startsWith("-") ? value : `+${value}`
+  }
+
+  const getRandomValue = (base: number, variance: number) => {
+    return Math.floor(base + Math.random() * variance * 2 - variance)
+  }
+
+  // Create derived values for KPIs that change on refresh
+  const dailyRevenue = `$${getRandomValue(4320, 500).toLocaleString()}`
+  const dailyRevenueChange = getRandomChange()
+  const dailyRevenueTrend = dailyRevenueChange.startsWith("-") ? "down" : "up"
+
+  const customerTraffic = getRandomValue(342, 30).toString()
+  const customerTrafficChange = getRandomChange()
+  const customerTrafficTrend = customerTrafficChange.startsWith("-") ? "down" : "up"
+
+  const conversionRate = `${getRandomValue(24, 3)}.${getRandomValue(1, 9)}%`
+  const conversionRateChange = getRandomChange()
+  const conversionRateTrend = conversionRateChange.startsWith("-") ? "down" : "up"
+
+  const energyUsage = `${getRandomValue(142, 15)} kWh`
+  const energyUsageChange = getRandomChange()
+  const energyUsageTrend = energyUsageChange.startsWith("-") ? "down" : "up"
+
+  const refreshData = async () => {
+    setIsRefreshing(true)
+
+    // Generate new data
+    const footTraffic = await generateFootTrafficData()
+    const energy = await generateEnergyConsumptionData()
+    const sales = await generateSalesData()
+    const inventory = await generateInventoryData()
+    const patterns = await generatePatternInsights()
+    const relationships = await generateRelationshipData()
+
+    // Update state with new data
+    setFootTrafficData(footTraffic)
+    setEnergyData(energy)
+    setSalesData(sales)
+    setInventoryData(inventory)
+    setPatternInsights(patterns)
+    setRelationshipData(relationships)
+
+    // Update the last updated timestamp
+    setLastUpdated(new Date())
+    setIsRefreshing(false)
+  }
 
   useEffect(() => {
     // Simulate data loading
     const loadData = async () => {
       setIsLoading(true)
-
-      // Generate all the data
-      const footTraffic = await generateFootTrafficData()
-      const energy = await generateEnergyConsumptionData()
-      const sales = await generateSalesData()
-      const inventory = await generateInventoryData()
-      const patterns = await generatePatternInsights()
-      const relationships = await generateRelationshipData()
-
-      // Update state with generated data
-      setFootTrafficData(footTraffic)
-      setEnergyData(energy)
-      setSalesData(sales)
-      setInventoryData(inventory)
-      setPatternInsights(patterns)
-      setRelationshipData(relationships)
-
+      await refreshData()
       setIsLoading(false)
     }
 
@@ -112,10 +148,17 @@ export function DashboardClient({ profile }: DashboardClientProps) {
               <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-sm">
-                  Last updated: Just now
+                  Last updated: {lastUpdated.toLocaleTimeString()}
                 </Badge>
-                <Button variant="outline" size="sm">
-                  Refresh Data
+                <Button variant="outline" size="sm" onClick={refreshData} disabled={isRefreshing}>
+                  {isRefreshing ? (
+                    <>
+                      <span className="animate-spin mr-2">⟳</span>
+                      Refreshing...
+                    </>
+                  ) : (
+                    <>Refresh Data</>
+                  )}
                 </Button>
               </div>
             </div>
@@ -133,33 +176,33 @@ export function DashboardClient({ profile }: DashboardClientProps) {
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                   <KpiCard
                     title="Daily Revenue"
-                    value="$4,320"
-                    change="+12.5%"
-                    trend="up"
+                    value={dailyRevenue}
+                    change={`${dailyRevenueChange}%`}
+                    trend={dailyRevenueTrend as "up" | "down"}
                     icon={<DollarSign className="h-4 w-4" />}
                     description="vs. previous day"
                   />
                   <KpiCard
                     title="Customer Traffic"
-                    value="342"
-                    change="+8.2%"
-                    trend="up"
+                    value={customerTraffic}
+                    change={`${customerTrafficChange}%`}
+                    trend={customerTrafficTrend as "up" | "down"}
                     icon={<Users className="h-4 w-4" />}
                     description="vs. previous day"
                   />
                   <KpiCard
                     title="Conversion Rate"
-                    value="24.3%"
-                    change="-2.1%"
-                    trend="down"
+                    value={conversionRate}
+                    change={`${conversionRateChange}%`}
+                    trend={conversionRateTrend as "up" | "down"}
                     icon={<ShoppingCart className="h-4 w-4" />}
                     description="vs. previous day"
                   />
                   <KpiCard
                     title="Energy Usage"
-                    value="142 kWh"
-                    change="+5.3%"
-                    trend="up"
+                    value={energyUsage}
+                    change={`${energyUsageChange}%`}
+                    trend={energyUsageTrend as "up" | "down"}
                     icon={<Zap className="h-4 w-4" />}
                     description="vs. previous day"
                   />
@@ -192,7 +235,7 @@ export function DashboardClient({ profile }: DashboardClientProps) {
                     <CardContent>
                       <DonutChart
                         data={energyData.byDevice}
-                        categories={["value"]}
+                        category="value"
                         index="name"
                         valueFormatter={(value) => `${value} kWh`}
                         colors={["blue", "cyan", "indigo", "violet"]}
