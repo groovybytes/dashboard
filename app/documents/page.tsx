@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "@/hooks/use-toast"
-import { Download, FileText, ChevronRight, File, FileJson, FileSpreadsheet, FileType, Trash2 } from "lucide-react"
+import { Download, FileText, ChevronRight, File, FileJson, FileSpreadsheet, Trash2 } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,8 +62,8 @@ const blobStorage = {
           },
           {
             id: "4",
-            name: "system_documentation.pdf",
-            type: "pdf",
+            name: "sales_data_2023.csv",
+            type: "csv",
             size: 1024 * 1024 * 3.8, // 3.8 MB
             uploadedAt: "2023-10-10T13:25:00Z",
             url: "#",
@@ -78,10 +78,98 @@ const blobStorage = {
           },
           {
             id: "6",
-            name: "device_manual.pdf",
-            type: "pdf",
+            name: "inventory_report.xlsx",
+            type: "xlsx",
             size: 1024 * 1024 * 8.2, // 8.2 MB
             uploadedAt: "2023-08-18T15:40:00Z",
+            url: "#",
+          },
+          {
+            id: "7",
+            name: "customer_feedback.json",
+            type: "json",
+            size: 1024 * 768, // 768 KB
+            uploadedAt: "2023-09-05T10:20:00Z",
+            url: "#",
+          },
+          {
+            id: "8",
+            name: "monthly_metrics.xlsx",
+            type: "xlsx",
+            size: 1024 * 1024 * 1.8, // 1.8 MB
+            uploadedAt: "2023-10-01T09:00:00Z",
+            url: "#",
+          },
+          {
+            id: "9",
+            name: "device_logs_q2.csv",
+            type: "csv",
+            size: 1024 * 1024 * 4.2, // 4.2 MB
+            uploadedAt: "2023-07-01T16:45:00Z",
+            url: "#",
+          },
+          {
+            id: "10",
+            name: "api_responses.json",
+            type: "json",
+            size: 1024 * 1024 * 1.1, // 1.1 MB
+            uploadedAt: "2023-08-30T14:15:00Z",
+            url: "#",
+          },
+          {
+            id: "11",
+            name: "employee_performance.xlsx",
+            type: "xlsx",
+            size: 1024 * 1024 * 2.3, // 2.3 MB
+            uploadedAt: "2023-09-15T11:30:00Z",
+            url: "#",
+          },
+          {
+            id: "12",
+            name: "traffic_analysis.csv",
+            type: "csv",
+            size: 1024 * 1024 * 6.5, // 6.5 MB
+            uploadedAt: "2023-10-20T10:10:00Z",
+            url: "#",
+          },
+          {
+            id: "13",
+            name: "system_config.json",
+            type: "json",
+            size: 1024 * 256, // 256 KB
+            uploadedAt: "2023-11-01T08:45:00Z",
+            url: "#",
+          },
+          {
+            id: "14",
+            name: "quarterly_report.xlsx",
+            type: "xlsx",
+            size: 1024 * 1024 * 3.4, // 3.4 MB
+            uploadedAt: "2023-10-05T15:20:00Z",
+            url: "#",
+          },
+          {
+            id: "15",
+            name: "user_activity.csv",
+            type: "csv",
+            size: 1024 * 1024 * 7.8, // 7.8 MB
+            uploadedAt: "2023-09-10T12:30:00Z",
+            url: "#",
+          },
+          {
+            id: "16",
+            name: "device_settings.json",
+            type: "json",
+            size: 1024 * 384, // 384 KB
+            uploadedAt: "2023-08-25T09:50:00Z",
+            url: "#",
+          },
+          {
+            id: "17",
+            name: "annual_budget.xlsx",
+            type: "xlsx",
+            size: 1024 * 1024 * 4.7, // 4.7 MB
+            uploadedAt: "2023-07-20T14:00:00Z",
             url: "#",
           },
         ])
@@ -153,6 +241,17 @@ export default function DocumentsPage() {
   }
 
   const handleFileUpload = async (file: File) => {
+    // Check if file type is allowed (CSV, JSON, XLSX only)
+    const fileType = file.name.split(".").pop()?.toLowerCase()
+    if (!["csv", "json", "xlsx"].includes(fileType || "")) {
+      toast({
+        title: "Invalid file type",
+        description: "Only CSV, JSON, and XLSX files are supported.",
+        variant: "destructive",
+      })
+      throw new Error("Invalid file type")
+    }
+
     try {
       await blobStorage.uploadDocument(file)
       await fetchDocuments()
@@ -244,15 +343,13 @@ export default function DocumentsPage() {
         return <FileText className="h-8 w-8 text-green-500" />
       case "xlsx":
         return <FileSpreadsheet className="h-8 w-8 text-emerald-500" />
-      case "pdf":
-        return <FileType className="h-8 w-8 text-red-500" />
       default:
         return <File className="h-8 w-8 text-gray-500" />
     }
   }
 
-  // Display only 3 documents if not showing all
-  const displayedDocuments = showAll ? documents : documents.slice(0, 3)
+  // Display only 6 documents if not showing all
+  const displayedDocuments = showAll ? documents : documents.slice(0, 6)
 
   return (
     <SidebarProvider>
@@ -268,7 +365,7 @@ export default function DocumentsPage() {
             <Card>
               <CardContent className="pt-6">
                 <FileUploader onFileUpload={handleFileUpload} />
-                <p className="text-xs text-muted-foreground mt-2">Supported file types: JSON, XLSX, CSV, PDF</p>
+                <p className="text-xs text-muted-foreground mt-2">Supported file types: JSON, XLSX, CSV</p>
               </CardContent>
             </Card>
           </div>
@@ -276,7 +373,7 @@ export default function DocumentsPage() {
           <div>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Document Library</h2>
-              {documents.length > 3 && (
+              {documents.length > 6 && (
                 <Button variant="link" onClick={() => setShowAll(!showAll)}>
                   {showAll ? "Show Less" : "Show All"}
                   <ChevronRight className={`ml-1 h-4 w-4 transition-transform ${showAll ? "rotate-90" : ""}`} />
@@ -294,7 +391,7 @@ export default function DocumentsPage() {
                   <FileText className="h-12 w-12 text-muted-foreground mb-4" />
                   <h3 className="font-medium text-lg mb-2">No documents found</h3>
                   <p className="text-muted-foreground text-center max-w-md mb-4">
-                    Upload JSON, XLSX, CSV, or PDF files to see them here
+                    Upload JSON, XLSX, or CSV files to see them here
                   </p>
                 </CardContent>
               </Card>
@@ -349,7 +446,7 @@ export default function DocumentsPage() {
               </div>
             )}
 
-            {!showAll && documents.length > 3 && (
+            {!showAll && documents.length > 6 && (
               <div className="mt-4 text-center">
                 <Button variant="outline" onClick={() => setShowAll(true)}>
                   Show All Documents ({documents.length})
