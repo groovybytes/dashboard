@@ -208,7 +208,11 @@ export function DashboardClient({ profile }: DashboardClientProps) {
       const fallbackData = generateFallbackData()
       setDashboardData(fallbackData)
       setLastUpdated(new Date())
-      setError(`Using fallback data. API connection failed: ${err.message}`)
+      if (err instanceof Error) {
+        setError(`Using fallback data. API connection failed: ${err.message}`)
+      } else {
+        setError('Using fallback data. API connection failed.')
+      }
 
       return fallbackData
     }
@@ -448,7 +452,7 @@ export function DashboardClient({ profile }: DashboardClientProps) {
                       {energyData.length > 0 ? (
                         <DonutChart
                           data={energyData}
-                          category="value"
+                          categories={["value"]}
                           index="name"
                           valueFormatter={(value) => `${value} kWh`}
                           colors={["blue", "cyan", "indigo", "violet"]}
