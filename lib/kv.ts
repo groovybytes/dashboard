@@ -427,12 +427,20 @@ export const openKv = async (
   }
 ): Promise<Kv> => {
   // Create storage with the standard Redis driver
-  const storage = await initializeStorage(redisConfig);
+  let _storage: Storage | undefined;
 
-  // Initialize version counter if not exists
-  const currentVersion = await storage.getItem<number>(META_VERSION_KEY) || 0;
-  if (!currentVersion) {
-    await storage.setItem(META_VERSION_KEY, 0);
+  async function getStorage(): Promise<Storage> {
+    if (_storage) return _storage;
+
+    _storage = await initializeStorage(redisConfig)
+
+    // Initialize version counter if not exists
+    const currentVersion = await _storage.getItem<number>(META_VERSION_KEY) || 0;
+    if (!currentVersion) {
+      await _storage.setItem(META_VERSION_KEY, 0);
+    }
+
+    return _storage;
   }
 
   // Set of watchers for change events
@@ -441,6 +449,7 @@ export const openKv = async (
 
   // Utility to produce a new versionstamp (simple increment)
   const nextVersionstamp = async (): Promise<string> => {
+    const storage = await getStorage();
     const version = (await storage.getItem<number>(META_VERSION_KEY) || 0) + 1;
     await storage.setItem(META_VERSION_KEY, version);
     return version.toString().padStart(20, "0");
@@ -449,6 +458,8 @@ export const openKv = async (
   // Helper: Get an entry (if present and not expired)
   const getEntry = async (key: KvKey): Promise<StoreEntry | null | undefined> => {
     const serialized = serializeKey(key);
+
+    const storage = await getStorage();
     const entry = await storage.getItem<StoreEntry>(serialized);
     if (entry && entry.expireAt && Date.now() > entry.expireAt) {
       // Remove expired entry
@@ -473,6 +484,7 @@ export const openKv = async (
     options?: KvListOptions
   ): Promise<KvListIterator<T>> {
     // Get all keys with their values
+    const storage = await getStorage();
     const keys = await storage.getKeys();
 
     // Filter out meta keys and queue keys
@@ -691,6 +703,7 @@ export const openKv = async (
       }
 
       // Apply all mutations
+      const storage = await getStorage();
       for (const mutate of this.mutations) {
         await mutate(storage);
       }
@@ -746,6 +759,7 @@ export const openKv = async (
       const expireAt = options?.expireIn ? Date.now() + options.expireIn : undefined;
       const entry: StoreEntry = { key, value, versionstamp, expireAt };
 
+      const storage = await getStorage();
       if (options?.expireIn) {
         // Using Redis TTL for expiration
         await storage.setItemRaw(serializeKey(key), JSON.stringify(entry), {
@@ -761,6 +775,7 @@ export const openKv = async (
 
     async delete(key: KvKey): Promise<void> {
       if (closed) throw new Error("KV store is closed");
+      const storage = await getStorage();
       await storage.removeItem(serializeKey(key));
       notifyWatchers({ type: "delete", key });
     },
@@ -783,6 +798,7 @@ export const openKv = async (
       const versionstamp = await nextVersionstamp();
       const entry: StoreEntry = { key: queueKey, value, versionstamp };
 
+      const storage = await getStorage();
       if (options?.delay) {
         // Using Redis TTL for delay
         await storage.setItemRaw(serializeKey(queueKey), JSON.stringify(entry), {
@@ -803,6 +819,7 @@ export const openKv = async (
 
       // For demonstration, poll the queue every second
       const interval = setInterval(async () => {
+        const storage = await getStorage();
         const keys = await storage.getKeys();
         const queueKeys = keys.filter(k => k.startsWith(QUEUE_PREFIX));
 
