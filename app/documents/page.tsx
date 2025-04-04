@@ -253,8 +253,12 @@ export default function DocumentsPage() {
     }
 
     try {
-      await blobStorage.uploadDocument(file)
-      await fetchDocuments()
+      // Upload the document and get the response
+      const newDocument = await blobStorage.uploadDocument(file)
+
+      // Add the new document to the documents list
+      setDocuments((prevDocuments) => [newDocument, ...prevDocuments])
+
       toast({
         title: "Success",
         description: "Document uploaded successfully",
