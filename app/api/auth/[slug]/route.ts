@@ -16,6 +16,19 @@ import { generateRandomHex } from '@/lib/auth/utils';
 import { createToken } from '@/lib/auth/token';
 import { kv } from '@/lib/kv';
 
+import { DefaultAzureCredential } from "@azure/identity";
+
+async function checkManagedIdentity() {
+  const credential = new DefaultAzureCredential();
+  try {
+    // Replace the resource with the one relevant to your scenario.
+    const tokenResponse = await credential.getToken("https://management.azure.com/");
+    console.log("Managed Identity is working. Access Token:", tokenResponse.token);
+  } catch (err) {
+    console.error("Managed Identity connection failed:", err);
+  }
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -58,6 +71,8 @@ export async function GET(
     })
 
     try {
+      
+    await checkManagedIdentity();
       await kv.set(['cool'], JSON.stringify({
         name: 'cool',
         verifier,
@@ -103,7 +118,7 @@ export async function GET(
     //   challenge, 
     // }, { status: 200 })
 
-    // Create a secure token that encapsulates both a random state (for CSRF) and the authority.
+    // // Create a secure token that encapsulates both a random state (for CSRF) and the authority.
     // const state = await createToken({
     //   state: generateRandomHex(32),
     //   authority: authority!,
