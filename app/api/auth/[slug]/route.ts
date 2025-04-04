@@ -69,45 +69,46 @@ export async function GET(
       verifier, 
       challenge,
     })
-
-    try {
-      
+    
     await checkManagedIdentity();
-      await kv.set(['cool'], JSON.stringify({
-        name: 'cool',
-        verifier,
-        challenge,
-        authority,
-        slug,
-        referer,
-      }));
 
-      const val = await kv.get<string>(['cool']);
-      console.log({
-        val,
-        verifier,
-        challenge,
-      })
+    // try {
+      
+    //   await kv.set(['cool'], JSON.stringify({
+    //     name: 'cool',
+    //     verifier,
+    //     challenge,
+    //     authority,
+    //     slug,
+    //     referer,
+    //   }));
 
-      return NextResponse.json({ 
-        state: "yes-kv",
-        authority, 
-        slug, 
-        referer, 
-        verifier, 
-        challenge, 
-      }, { status: 200 })
-    } catch (e) {
-      console.warn({
-        e,
-        kv: "Set KV"
-      })
+    //   const val = await kv.get<string>(['cool']);
+    //   console.log({
+    //     val,
+    //     verifier,
+    //     challenge,
+    //   })
 
-      return NextResponse.json({ 
-        state: "error",
-        error: e
-      }, { status: 200 })
-    }
+    //   // return NextResponse.json({ 
+    //   //   state: "yes-kv",
+    //   //   authority, 
+    //   //   slug, 
+    //   //   referer, 
+    //   //   verifier, 
+    //   //   challenge, 
+    //   // }, { status: 200 })
+    // } catch (e) {
+    //   console.warn({
+    //     e,
+    //     kv: "Set KV"
+    //   })
+
+    //   // return NextResponse.json({ 
+    //   //   state: "error",
+    //   //   error: e
+    //   // }, { status: 200 })
+    // }
 
     // return NextResponse.json({ 
     //   state: "no-kv",
@@ -118,43 +119,43 @@ export async function GET(
     //   challenge, 
     // }, { status: 200 })
 
-    // // Create a secure token that encapsulates both a random state (for CSRF) and the authority.
-    // const state = await createToken({
-    //   state: generateRandomHex(32),
-    //   authority: authority!,
-    //   referer
-    // });
+    // Create a secure token that encapsulates both a random state (for CSRF) and the authority.
+    const state = await createToken({
+      state: generateRandomHex(32),
+      authority: authority!,
+      referer
+    });
 
-    // // Save these values to your key–value store (you can replace kv with your own persistence mechanism)
-    // await kv.set([state, ...KV_VERIFIER_KEY], verifier);
-    // await kv.set([state, ...KV_CHALLENGE_KEY], challenge);
-    // await kv.set([state, ...KV_CHALLENGE_METHOD_KEY], 'S256');
+    // Save these values to your key–value store (you can replace kv with your own persistence mechanism)
+    await kv.set([state, ...KV_VERIFIER_KEY], verifier);
+    await kv.set([state, ...KV_CHALLENGE_KEY], challenge);
+    await kv.set([state, ...KV_CHALLENGE_METHOD_KEY], 'S256');
 
-    // console.log({
-    //   state,
-    //   KV_VERIFIER_KEY,
-    //   KV_CHALLENGE_KEY,
-    //   KV_CHALLENGE_METHOD_KEY,
-    // })
+    console.log({
+      state,
+      KV_VERIFIER_KEY,
+      KV_CHALLENGE_KEY,
+      KV_CHALLENGE_METHOD_KEY,
+    })
 
-    // // Prepare the parameters for the auth code URL request
-    // const authCodeUrlParameters: AuthorizationUrlRequest = {
-    //   redirectUri: REDIRECT_URI,
-    //   scopes: MSAL_SCOPES,
-    //   codeChallenge: challenge,
-    //   codeChallengeMethod: 'S256',
-    //   authority,
-    //   state,
-    // };
+    // Prepare the parameters for the auth code URL request
+    const authCodeUrlParameters: AuthorizationUrlRequest = {
+      redirectUri: REDIRECT_URI,
+      scopes: MSAL_SCOPES,
+      codeChallenge: challenge,
+      codeChallengeMethod: 'S256',
+      authority,
+      state,
+    };
 
-    // // Get the auth URL from MSAL
-    // const authCodeUrl = await clientApplication.getAuthCodeUrl(authCodeUrlParameters);
-    // console.log({
-    //   authCodeUrl
-    // })
+    // Get the auth URL from MSAL
+    const authCodeUrl = await clientApplication.getAuthCodeUrl(authCodeUrlParameters);
+    console.log({
+      authCodeUrl
+    })
 
-    // // In a web app you would send the URL to the client (which can then redirect the browser)
-    // return NextResponse.redirect(authCodeUrl);
+    // In a web app you would send the URL to the client (which can then redirect the browser)
+    return NextResponse.redirect(authCodeUrl);
   } catch (error) {
     console.error(`Error in auth/${slug}:`, error);
     return NextResponse.json({ error: 'Failed to generate auth URL' }, { status: 500 });
